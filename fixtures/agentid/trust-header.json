@@ -1,0 +1,28 @@
+{
+  "description": "Signed Agent-Trust-Score JWT (EdDSA) for HTTP header injection",
+  "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkFnZW50LVRydXN0LVNjb3JlIiwia2lkIjoiYWdlbnRpZC1pbnRlcm9wLXRlc3QifQ.eyJhZ2VudF9pZCI6ImFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJkaWQiOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJ0cnVzdF9sZXZlbCI6MiwidHJ1c3RfbGV2ZWxfbGFiZWwiOiJMMiAtIFZlcmlmaWVkIiwiYmVoYXZpb3VyYWxfcmlza19zY29yZSI6MCwic2NhcnJpbmdfc2NvcmUiOjAsImNvbnRleHRfY29udGludWl0eV9zY29yZSI6MTAwLCJhdHRlc3RhdGlvbl9jb3VudCI6MSwiaWF0IjoxNzQ0MTU2ODAwLCJleHAiOjE3NDQxNjA0MDB9.UuNX0e-7Hy0RiR_C3-proWwbfF2VnjeboIfbTlAyL5xAyvDJIBo9lmdTglPbULQkkZiz9uHFfS2rQpQsDhWZBw",
+  "header": {
+    "alg": "EdDSA",
+    "typ": "Agent-Trust-Score",
+    "kid": "agentid-interop-test"
+  },
+  "payload": {
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "trust_level": 2,
+    "trust_level_label": "L2 - Verified",
+    "behavioural_risk_score": 0,
+    "scarring_score": 0,
+    "context_continuity_score": 100,
+    "attestation_count": 1,
+    "iat": 1744156800,
+    "exp": 1744160400
+  },
+  "signing_input": "eyJhbGciOiJFZERTQSIsInR5cCI6IkFnZW50LVRydXN0LVNjb3JlIiwia2lkIjoiYWdlbnRpZC1pbnRlcm9wLXRlc3QifQ.eyJhZ2VudF9pZCI6ImFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJkaWQiOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJ0cnVzdF9sZXZlbCI6MiwidHJ1c3RfbGV2ZWxfbGFiZWwiOiJMMiAtIFZlcmlmaWVkIiwiYmVoYXZpb3VyYWxfcmlza19zY29yZSI6MCwic2NhcnJpbmdfc2NvcmUiOjAsImNvbnRleHRfY29udGludWl0eV9zY29yZSI6MTAwLCJhdHRlc3RhdGlvbl9jb3VudCI6MSwiaWF0IjoxNzQ0MTU2ODAwLCJleHAiOjE3NDQxNjA0MDB9",
+  "signature_hex": "52e357d1efbb1f2d11891fc2dfea6ba16c1b7c5d959e379ba087db4e50322f9c40caf0c9201a3d9667538253db50b4249198b3f6e1c57d2dab42942c0e159907",
+  "verification": {
+    "algorithm": "EdDSA",
+    "public_key": "207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6",
+    "expected": true
+  }
+}

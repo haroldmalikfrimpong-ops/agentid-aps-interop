@@ -1,0 +1,26 @@
+{
+  "description": "Agent registration payload and response",
+  "request": {
+    "name": "Interop Test Agent",
+    "description": "Test agent for AgentID + APS interop verification",
+    "capabilities": [
+      "verify",
+      "sign",
+      "delegate"
+    ],
+    "platform": "test"
+  },
+  "response": {
+    "agent_id": "agent_interop_test_001",
+    "name": "Interop Test Agent",
+    "description": "Test agent for AgentID + APS interop verification",
+    "capabilities": [
+      "verify",
+      "sign",
+      "delegate"
+    ],
+    "trust_level": 1,
+    "trust_level_label": "L1 - Registered",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+  }
+}

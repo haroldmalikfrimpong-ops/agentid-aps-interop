@@ -1,0 +1,57 @@
+{
+  "description": "End-to-end test: identity -> authorization -> receipt",
+  "steps": [
+    {
+      "step": 1,
+      "layer": "Identity (AgentID)",
+      "action": "Verify agent via DID",
+      "input": {
+        "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+      },
+      "expected": {
+        "verified": true,
+        "trust_level": 2,
+        "ed25519_key": "207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6"
+      }
+    },
+    {
+      "step": 2,
+      "layer": "Identity (AgentID)",
+      "action": "Verify trust-header JWT signature",
+      "input": {
+        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkFnZW50LVRydXN0LVNjb3JlIiwia2lkIjoiYWdlbnRpZC1pbnRlcm9wLXRlc3QifQ.eyJhZ2VudF9pZCI6ImFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJkaWQiOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJ0cnVzdF9sZXZlbCI6MiwidHJ1c3RfbGV2ZWxfbGFiZWwiOiJMMiAtIFZlcmlmaWVkIiwiYmVoYXZpb3VyYWxfcmlza19zY29yZSI6MCwic2NhcnJpbmdfc2NvcmUiOjAsImNvbnRleHRfY29udGludWl0eV9zY29yZSI6MTAwLCJhdHRlc3RhdGlvbl9jb3VudCI6MSwiaWF0IjoxNzQ0MTU2ODAwLCJleHAiOjE3NDQxNjA0MDB9.UuNX0e-7Hy0RiR_C3-proWwbfF2VnjeboIfbTlAyL5xAyvDJIBo9lmdTglPbULQkkZiz9uHFfS2rQpQsDhWZBw",
+        "public_key": "207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6"
+      },
+      "expected": {
+        "signature_valid": true,
+        "algorithm": "EdDSA"
+      }
+    },
+    {
+      "step": 3,
+      "layer": "Authorization (APS)",
+      "action": "Evaluate delegation scope using AgentID credential",
+      "input": {
+        "credential_hash": "f6879c204f4148f83c1b298281ffa79fac7ba8eeaaafb9cb042e4572079a05b2",
+        "requested_scope": "tool:web_search"
+      },
+      "expected": "TO BE PROVIDED BY @aeoess"
+    },
+    {
+      "step": 4,
+      "layer": "Receipt (APS)",
+      "action": "Governance receipt references AgentID credential hash",
+      "input": {
+        "action_ref": "cross-chain-test-001"
+      },
+      "expected": "TO BE PROVIDED BY @aeoess"
+    }
+  ],
+  "test_agent": {
+    "agent_id": "agent_interop_test_001",
+    "did_web": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "did_aps": "did:aps:z3Bmy2y8WtbRXNBYayR64kYqXN1XRi6Hqch6FwKFxmSWH",
+    "ed25519_public_key": "207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6",
+    "credential_hash": "f6879c204f4148f83c1b298281ffa79fac7ba8eeaaafb9cb042e4572079a05b2"
+  }
+}

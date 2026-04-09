@@ -1,0 +1,40 @@
+{
+  "description": "Full verification response from AgentID verify endpoint",
+  "request": {
+    "agent_id": "agent_interop_test_001"
+  },
+  "response": {
+    "verified": true,
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "resolution_source": "direct",
+    "name": "Interop Test Agent",
+    "capabilities": [
+      "verify",
+      "sign",
+      "delegate"
+    ],
+    "trust_level": 2,
+    "trust_level_label": "L2 - Verified",
+    "permissions": [
+      "read",
+      "discover",
+      "verify",
+      "send_message",
+      "connect",
+      "challenge_response",
+      "handle_data"
+    ],
+    "certificate_valid": true,
+    "active": true,
+    "supported_key_types": [
+      "ecdsa-p256",
+      "ed25519"
+    ],
+    "negative_signals": 0,
+    "scarring_score": 0
+  },
+  "credential_hash": "f6879c204f4148f83c1b298281ffa79fac7ba8eeaaafb9cb042e4572079a05b2",
+  "credential_hash_input": "{\"agent_id\":\"agent_interop_test_001\",\"did\":\"did:web:getagentid.dev:agent:agent_interop_test_001\",\"ed25519_key\":\"207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6\",\"trust_level\":2}",
+  "credential_hash_note": "SHA-256 of canonicalized credential fields - use this in APS receipt chain"
+}

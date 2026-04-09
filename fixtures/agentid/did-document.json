@@ -1,0 +1,40 @@
+{
+  "description": "W3C DID Document for the test agent",
+  "did_document": {
+    "@context": [
+      "https://www.w3.org/ns/did/v1",
+      "https://w3id.org/security/suites/ed25519-2020/v1"
+    ],
+    "id": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "verificationMethod": [
+      {
+        "id": "did:web:getagentid.dev:agent:agent_interop_test_001#ed25519-key-1",
+        "type": "Ed25519VerificationKey2020",
+        "controller": "did:web:getagentid.dev:agent:agent_interop_test_001",
+        "publicKeyHex": "207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6"
+      }
+    ],
+    "authentication": [
+      "did:web:getagentid.dev:agent:agent_interop_test_001#ed25519-key-1"
+    ],
+    "assertionMethod": [
+      "did:web:getagentid.dev:agent:agent_interop_test_001#ed25519-key-1"
+    ],
+    "service": [
+      {
+        "id": "did:web:getagentid.dev:agent:agent_interop_test_001#agentid-verify",
+        "type": "AgentIDVerification",
+        "serviceEndpoint": "https://getagentid.dev/api/v1/agents/verify"
+      },
+      {
+        "id": "did:web:getagentid.dev:agent:agent_interop_test_001#trust-header",
+        "type": "AgentTrustHeader",
+        "serviceEndpoint": "https://getagentid.dev/api/v1/agents/trust-header"
+      }
+    ]
+  },
+  "also_resolvable_as": {
+    "did_aps": "did:aps:z3Bmy2y8WtbRXNBYayR64kYqXN1XRi6Hqch6FwKFxmSWH",
+    "note": "Same Ed25519 key, multibase-encoded (base58btc)"
+  }
+}

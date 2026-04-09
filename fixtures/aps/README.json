@@ -1,0 +1,10 @@
+{
+  "description": "Placeholder for APS delegation and receipt fixtures",
+  "contributed_by": "@aeoess",
+  "expected_fixtures": [
+    "delegation.json - delegation scope evaluation referencing AgentID credential",
+    "receipt.json - governance receipt with credential_hash from AgentID"
+  ],
+  "agentid_credential_hash": "f6879c204f4148f83c1b298281ffa79fac7ba8eeaaafb9cb042e4572079a05b2",
+  "note": "APS fixtures should reference this credential_hash to complete the audit chain"
+}
