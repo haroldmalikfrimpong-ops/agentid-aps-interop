@@ -1,0 +1,27 @@
+{
+  "scenario": "agentid-valid-aps-revoked",
+  "description": "AgentID identity valid, APS delegation revoked. Composite: deny.",
+  "agent_id": "agent_interop_test_001",
+  "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "aps_delegation": {
+    "version": "1.40.0",
+    "delegator": "did:aps:z6MkTestPrincipal001",
+    "delegate": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "scope": [
+      "read:public"
+    ],
+    "not_before": "2026-04-10T00:00:00Z",
+    "not_after": "2026-05-10T00:00:00Z",
+    "nonce": "interop-revoked-001",
+    "revoked_at": "2026-04-10T06:00:00Z",
+    "revocation_reason": "delegator_initiated"
+  },
+  "signature_alg": "Ed25519",
+  "canonicalization": "JCS (RFC 8785)",
+  "expected_result": {
+    "identity_gate": "passed",
+    "delegation_gate": "failed",
+    "composite_decision": "deny",
+    "reasoning": "Delegation revoked_at precedes request time. Identity gate alone insufficient."
+  }
+}

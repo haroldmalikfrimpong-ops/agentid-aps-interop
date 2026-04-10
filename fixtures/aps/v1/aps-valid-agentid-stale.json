@@ -1,0 +1,26 @@
+{
+  "scenario": "aps-valid-agentid-stale",
+  "description": "APS delegation valid, AgentID attestation past freshness window. Composite: conditional.",
+  "agent_id": "agent_interop_test_001",
+  "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "aps_delegation": {
+    "version": "1.40.0",
+    "delegator": "did:aps:z6MkTestPrincipal001",
+    "delegate": "did:web:getagentid.dev:agent:agent_interop_test_001",
+    "scope": [
+      "read:public",
+      "write:own"
+    ],
+    "not_before": "2026-04-10T00:00:00Z",
+    "not_after": "2026-05-10T00:00:00Z",
+    "nonce": "interop-stale-001"
+  },
+  "signature_alg": "Ed25519",
+  "canonicalization": "JCS (RFC 8785)",
+  "expected_result": {
+    "identity_gate": "stale",
+    "delegation_gate": "passed",
+    "composite_decision": "conditional",
+    "reasoning": "APS delegation valid. AgentID attestation outside consumer freshness window. Decision depends on consumer policy."
+  }
+}

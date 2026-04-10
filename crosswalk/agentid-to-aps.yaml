@@ -1,0 +1,33 @@
+version: 0.1
+description: Field-name mapping between AgentID and APS vocabularies.
+mappings:
+  - agentid: agent_id
+    aps: delegate
+    note: AgentID uses short ID, APS uses DID form
+  - agentid: did
+    aps: delegate
+    note: Canonical DID reference
+  - agentid: trust_level
+    aps: grade
+    note: AgentID L0-L3, APS Grade 0-3
+  - agentid: ed25519_public_key
+    aps: public_key
+    note: Both Ed25519, hex or multibase
+  - agentid: issued_at
+    aps: not_before
+    note: Attestation validity start
+  - agentid: expires_at
+    aps: not_after
+    note: Attestation validity end
+  - agentid: revocation_status
+    aps: revoked_at
+    note: AgentID boolean, APS timestamp
+  - agentid: identity_gate
+    aps: identity_gate
+    note: First-class field on AgentID /verify. Either explicit emission or successful DID resolution satisfies the gate.
+  - agentid: wallet_binding
+    aps: wallet_ref
+    note: AgentID carries solana_address and optional wallet_address. bound_addresses is the union. APS v1.40.0 wallet_ref accepts multi-chain array.
+  - agentid: attestation_signature
+    aps: signature
+    note: Ed25519 over JCS-canonicalized payload
