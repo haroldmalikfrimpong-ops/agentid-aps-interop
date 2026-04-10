@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/haroldmalikfrimpong-ops/agentid-aps-interop/blob/main/vector.schema.json",
+  "title": "AgentID + APS Interop Test Vector",
+  "description": "Schema for interop test vectors in fixtures/{agentid,aps,composed}/v1/ and forward. Supports both structural-shape (v1) and cryptographically-verifiable (v2) fixture forms.",
+  "type": "object",
+  "required": [
+    "scenario",
+    "description",
+    "subject",
+    "expected_result",
+    "metadata"
+  ],
+  "properties": {
+    "scenario": {
+      "type": "string",
+      "description": "Kebab-case identifier for the test vector. Must be unique within its directory.",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Single-sentence human-readable description of what the vector tests."
+    },
+    "subject": {
+      "type": "object",
+      "description": "The agent the vector is about.",
+      "required": ["agent_id", "did"],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "AgentID short identifier."
+        },
+        "did": {
+          "type": "string",
+          "description": "Full W3C DID for the subject."
+        },
+        "bound_addresses": {
+          "type": "array",
+          "description": "Wallet addresses bound to this agent (when wallet binding is in scope).",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "System-specific input envelopes. At least one of agentid_attestation or aps_delegation must be present.",
+      "properties": {
+        "agentid_attestation": {
+          "type": "object",
+          "description": "AgentID attestation envelope (verify response, trust-header payload, or attestation envelope).",
+          "properties": {
+            "agent_id": { "type": "string" },
+            "did": { "type": "string" },
+            "trust_level": { "type": "integer", "minimum": 1, "maximum": 4 },
+            "trust_level_label": { "type": "string" },
+            "certificate_valid": { "type": "boolean" },
+            "active": { "type": "boolean" },
+            "ed25519_bound": { "type": "boolean" },
+            "wallet_bound": { "type": "boolean" },
+            "solana_address": { "type": ["string", "null"] },
+            "wallet_address": { "type": ["string", "null"] },
+            "wallet_chain": { "type": ["string", "null"] },
+            "bound_addresses": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "subject_binding": {
+              "type": "string",
+              "enum": ["wallet_bound", "wallet_acknowledged", "reference"]
+            },
+            "issued_at": { "type": "string", "format": "date-time" },
+            "expires_at": { "type": "string", "format": "date-time" },
+            "key_status": {
+              "type": "string",
+              "enum": ["active", "deprecated", "revoked", "compromised"]
+            },
+            "compromised_since": { "type": ["string", "null"], "format": "date-time" },
+            "revoked_at": { "type": ["string", "null"], "format": "date-time" },
+            "revocation_reason": { "type": ["string", "null"] },
+            "version": { "type": "string" }
+          }
+        },
+        "aps_delegation": {
+          "type": "object",
+          "description": "APS delegation envelope.",
+          "properties": {
+            "version": { "type": "string" },
+            "delegator": { "type": "string" },
+            "delegate": { "type": "string" },
+            "scope": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "spend_limit": {
+              "type": "object",
+              "properties": {
+                "amount": { "type": "number" },
+                "currency": { "type": "string" },
+                "period": { "type": "string" }
+              }
+            },
+            "wallet_ref": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "chain": { "type": "string" },
+                  "address": { "type": "string" }
+                }
+              }
+            },
+            "not_before": { "type": "string", "format": "date-time" },
+            "not_after": { "type": "string", "format": "date-time" },
+            "nonce": { "type": "string" },
+            "revoked_at": { "type": ["string", "null"], "format": "date-time" },
+            "revocation_reason": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "anyOf": [
+        { "required": ["agentid_attestation"] },
+        { "required": ["aps_delegation"] }
+      ]
+    },
+    "signed_form": {
+      "type": "object",
+      "description": "Cryptographic verification material. Optional in v1 (structural-only). REQUIRED in v2.",
+      "properties": {
+        "jws": {
+          "type": "string",
+          "description": "Compact JWS representation of the signed envelope."
+        },
+        "header": {
+          "type": "object",
+          "description": "Decoded JWS header (alg, kid, typ)."
+        },
+        "payload_canonical": {
+          "type": "string",
+          "description": "Hex or base64url representation of the JCS-canonicalized payload bytes that were signed."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Hex or base64url representation of the raw signature bytes."
+        },
+        "public_key": {
+          "type": "object",
+          "description": "Public key for offline signature verification.",
+          "properties": {
+            "kty": { "type": "string" },
+            "crv": { "type": "string" },
+            "x": { "type": "string" },
+            "kid": { "type": "string" },
+            "alg": { "type": "string" }
+          }
+        },
+        "jwks_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Public JWKS URL where the signing key can be resolved at verification time."
+        },
+        "kid": {
+          "type": "string",
+          "description": "Key identifier matching the entry in jwks_url."
+        }
+      }
+    },
+    "expected_result": {
+      "type": "object",
+      "description": "Expected gate states and composite decision a conformant verifier should produce.",
+      "required": ["composite_decision", "reasoning"],
+      "properties": {
+        "identity_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "stale", "not_evaluated"],
+          "description": "AgentID identity gate state. 'passed' means DID resolves and identity is current; 'failed' means unresolvable or invalid; 'stale' means past freshness window; 'not_evaluated' means this vector doesn't test identity."
+        },
+        "delegation_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "stale", "not_evaluated"],
+          "description": "APS delegation gate state."
+        },
+        "key_lifecycle_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "deprecated", "revoked", "compromised", "not_evaluated"],
+          "description": "AgentID key lifecycle gate state. Tests that the signing key is active and not revoked or compromised."
+        },
+        "composite_decision": {
+          "type": "string",
+          "enum": ["permit", "deny", "conditional", "refer"],
+          "description": "The final decision a verifier should produce given the AND-composition of all gates that were evaluated."
+        },
+        "reasoning": {
+          "type": "string",
+          "description": "Human-readable explanation of why the composite_decision was reached."
+        },
+        "decisive_gate": {
+          "type": "string",
+          "enum": ["identity", "delegation", "key_lifecycle", "all_passed"],
+          "description": "Which gate was the deciding factor in the composite decision. Helps consumers debug per-gate failures rather than collapsing into a single confidence score."
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Vector metadata for catalog and cross-validation.",
+      "required": ["signature_alg", "canonicalization", "schema_version"],
+      "properties": {
+        "signature_alg": {
+          "type": "string",
+          "description": "Signature algorithm used (e.g., 'Ed25519', 'EdDSA', 'ES256').",
+          "enum": ["Ed25519", "EdDSA", "ES256", "ES256K", "RS256"]
+        },
+        "canonicalization": {
+          "type": "string",
+          "description": "Canonicalization rule applied before signing.",
+          "enum": ["JCS (RFC 8785)", "CBOR", "none"]
+        },
+        "schema_version": {
+          "type": "string",
+          "description": "Version of vector.schema.json this fixture conforms to.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "fixture_form": {
+          "type": "string",
+          "enum": ["structural", "signed"],
+          "description": "Whether this fixture is structural-shape only (v1) or includes cryptographically verifiable bytes (v2)."
+        },
+        "contributors": {
+          "type": "array",
+          "description": "GitHub handles of contributors to this fixture.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
