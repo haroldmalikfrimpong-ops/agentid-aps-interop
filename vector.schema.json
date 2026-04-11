@@ -166,28 +166,52 @@
     },
     "expected_result": {
       "type": "object",
-      "description": "Expected gate states and composite decision a conformant verifier should produce.",
-      "required": ["composite_decision", "reasoning"],
+      "description": "Expected gate states, failing gates, and composite decision a conformant verifier should produce. Five-gate model per the converged design (A2A #1672): per-gate failure reporting prevents collapse into a single confidence score, and failing_gates names exactly which gate(s) tipped the verdict.",
+      "required": ["composite_decision", "reasoning", "failing_gates"],
       "properties": {
         "identity_gate": {
           "type": "string",
-          "enum": ["passed", "failed", "stale", "not_evaluated"],
-          "description": "AgentID identity gate state. 'passed' means DID resolves and identity is current; 'failed' means unresolvable or invalid; 'stale' means past freshness window; 'not_evaluated' means this vector doesn't test identity."
+          "enum": ["passed", "failed", "stale", "not_applicable"],
+          "description": "AgentID identity gate state. 'passed' means DID resolves and identity is current; 'failed' means unresolvable or invalid; 'stale' means past freshness window but DID still resolves; 'not_applicable' means this vector intentionally does not test identity (must be explicit, not omitted)."
         },
         "delegation_gate": {
           "type": "string",
-          "enum": ["passed", "failed", "stale", "not_evaluated"],
-          "description": "APS delegation gate state."
+          "enum": ["passed", "failed", "not_applicable"],
+          "description": "APS delegation gate state. 'passed' means delegation in window with valid scope; 'failed' means revoked, expired, or scope-mismatched; 'not_applicable' means vector does not test delegation."
+        },
+        "wallet_state_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "not_applicable"],
+          "description": "Wallet state gate. 'passed' means the bound wallet matches the signed payload claim; 'failed' means divergence (e.g., AgentID solana_address != APS wallet_ref); 'not_applicable' means vector does not test wallet binding."
+        },
+        "revocation_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "not_applicable"],
+          "description": "Revocation gate. 'passed' means no revocation present at evaluation time; 'failed' means a revocation entry preceded the request (CRED_REVOKED_AT_PROCESS or equivalent); 'not_applicable' means vector does not test revocation."
+        },
+        "policy_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "not_applicable"],
+          "description": "Policy gate. 'passed' means action satisfies the active constraint set; 'failed' means action violates a scope, spend, or other policy constraint; 'not_applicable' means vector does not test policy."
         },
         "key_lifecycle_gate": {
           "type": "string",
-          "enum": ["passed", "failed", "deprecated", "revoked", "compromised", "not_evaluated"],
-          "description": "AgentID key lifecycle gate state. Tests that the signing key is active and not revoked or compromised."
+          "enum": ["passed", "failed", "deprecated", "revoked", "compromised", "not_applicable"],
+          "description": "AgentID key lifecycle gate state. Richer enum than the strict pass/fail gates because the diagnostic distinction between 'rotated', 'revoked', and 'compromised' carries different consumer responses (e.g., 'compromised' invalidates ALL prior receipts, 'rotated' does not)."
         },
         "composite_decision": {
           "type": "string",
-          "enum": ["permit", "deny", "conditional", "refer"],
-          "description": "The final decision a verifier should produce given the AND-composition of all gates that were evaluated."
+          "enum": ["permit", "deny", "conditional_allow", "provisional_allow", "refer"],
+          "description": "The final decision a verifier should produce given the AND-composition of all gates that were evaluated. AND-composition means a single failed gate produces deny regardless of how many other gates passed."
+        },
+        "failing_gates": {
+          "type": "array",
+          "description": "Array of gate names that failed (or returned a non-passing state). Empty array when composite_decision is 'permit'. Non-empty when composite_decision is 'deny' / 'conditional_allow' / 'provisional_allow' / 'refer'. This is the structural encoding of per-gate failure reporting — a verifier that produces the right composite for the wrong reason fails the vector.",
+          "items": {
+            "type": "string",
+            "enum": ["identity_gate", "delegation_gate", "wallet_state_gate", "revocation_gate", "policy_gate", "key_lifecycle_gate"]
+          },
+          "uniqueItems": true
         },
         "reasoning": {
           "type": "string",
@@ -195,8 +219,8 @@
         },
         "decisive_gate": {
           "type": "string",
-          "enum": ["identity", "delegation", "key_lifecycle", "all_passed"],
-          "description": "Which gate was the deciding factor in the composite decision. Helps consumers debug per-gate failures rather than collapsing into a single confidence score."
+          "enum": ["identity", "delegation", "wallet_state", "revocation", "policy", "key_lifecycle", "all_passed"],
+          "description": "Which gate was the deciding factor in the composite decision. Convenience field — derivable from failing_gates but useful for human readers."
         }
       }
     },

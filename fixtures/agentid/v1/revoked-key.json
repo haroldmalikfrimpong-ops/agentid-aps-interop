@@ -36,16 +36,20 @@
   },
   "expected_result": {
     "identity_gate": "passed",
-    "delegation_gate": "not_evaluated",
+    "delegation_gate": "not_applicable",
+    "wallet_state_gate": "not_applicable",
+    "revocation_gate": "not_applicable",
+    "policy_gate": "not_applicable",
     "key_lifecycle_gate": "revoked",
     "composite_decision": "deny",
+    "failing_gates": ["key_lifecycle_gate"],
     "reasoning": "Agent identity resolves and the certificate is structurally valid, but the signing key was revoked at 2026-04-08T12:30:00Z (revocation_reason: key_rotation). All proofs from a revoked key are untrusted regardless of timestamp per the AgentID compromise policy. Identity gate alone is insufficient when the key lifecycle gate fails.",
     "decisive_gate": "key_lifecycle"
   },
   "metadata": {
     "signature_alg": "Ed25519",
     "canonicalization": "JCS (RFC 8785)",
-    "schema_version": "1.0.0",
+    "schema_version": "1.0.1",
     "fixture_form": "structural",
     "contributors": ["haroldmalikfrimpong-ops"]
   }

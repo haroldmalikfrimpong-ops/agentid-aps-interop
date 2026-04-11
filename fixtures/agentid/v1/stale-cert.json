@@ -36,16 +36,20 @@
   },
   "expected_result": {
     "identity_gate": "failed",
-    "delegation_gate": "not_evaluated",
+    "delegation_gate": "not_applicable",
+    "wallet_state_gate": "not_applicable",
+    "revocation_gate": "not_applicable",
+    "policy_gate": "not_applicable",
     "key_lifecycle_gate": "passed",
     "composite_decision": "deny",
+    "failing_gates": ["identity_gate"],
     "reasoning": "Agent DID resolves and signing key is active, but the identity certificate expired at 2026-04-09T23:59:59Z (exp precedes the request time of 2026-04-10T+). The certificate_valid field is explicitly false. Identity gate is a hard prerequisite — a current key cannot rescue an expired certificate.",
     "decisive_gate": "identity"
   },
   "metadata": {
     "signature_alg": "Ed25519",
     "canonicalization": "JCS (RFC 8785)",
-    "schema_version": "1.0.0",
+    "schema_version": "1.0.1",
     "fixture_form": "structural",
     "contributors": ["haroldmalikfrimpong-ops"]
   }

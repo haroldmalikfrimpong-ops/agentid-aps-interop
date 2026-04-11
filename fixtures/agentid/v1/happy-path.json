@@ -36,16 +36,20 @@
   },
   "expected_result": {
     "identity_gate": "passed",
-    "delegation_gate": "not_evaluated",
+    "delegation_gate": "not_applicable",
+    "wallet_state_gate": "not_applicable",
+    "revocation_gate": "not_applicable",
+    "policy_gate": "not_applicable",
     "key_lifecycle_gate": "passed",
     "composite_decision": "permit",
-    "reasoning": "Identity DID resolves to a known agent. Certificate within validity window (issued_at <= now <= expires_at). Ed25519 key bound and active. Wallet binding present in signed payload. No revocation, no compromise. All evaluated gates pass.",
+    "failing_gates": [],
+    "reasoning": "Identity DID resolves to a known agent. Certificate within validity window (issued_at <= now <= expires_at). Ed25519 key bound and active. Wallet binding present in signed payload. No revocation, no compromise. All evaluated gates pass; delegation, wallet_state, revocation, and policy gates are not applicable to this identity-only vector.",
     "decisive_gate": "all_passed"
   },
   "metadata": {
     "signature_alg": "Ed25519",
     "canonicalization": "JCS (RFC 8785)",
-    "schema_version": "1.0.0",
+    "schema_version": "1.0.1",
     "fixture_form": "structural",
     "contributors": ["haroldmalikfrimpong-ops"]
   }
