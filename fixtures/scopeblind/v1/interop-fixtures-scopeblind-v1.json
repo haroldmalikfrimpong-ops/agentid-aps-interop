@@ -1,0 +1,379 @@
+{
+  "_meta": {
+    "system": "ScopeBlind / protect-mcp / VeritasActa",
+    "version": "1.0.0",
+    "generated_at": "2026-04-14T03:01:27.844Z",
+    "keypair": {
+      "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+      "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+      "jwk": {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+        "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+        "use": "sig"
+      },
+      "note": "RFC 8032 Test Vector #1 — do NOT use in production"
+    },
+    "canonicalization": "JCS (RFC 8785) — JSON Canonicalization Scheme",
+    "signing_algorithm": "Ed25519 (RFC 8032)",
+    "envelope_format": "VeritasActa v2 structured envelope",
+    "verification": {
+      "cli": "npx @veritasacta/verify <file.json> --key <public_key_hex>",
+      "self_test": "npx @veritasacta/verify --self-test",
+      "exit_codes": {
+        "0": "signature valid — proven authentic",
+        "1": "signature invalid — proven tampered",
+        "2": "verifier error — malformed input or missing key"
+      }
+    },
+    "interop_gates": {
+      "identity_gate": "not_applicable — issuer-blind by design; verification does not require DID resolution",
+      "delegation_gate": "supported — parent_receipt_id links receipts into a hash chain",
+      "wallet_state_gate": "not_applicable — receipts are content-addressed, not wallet-addressed",
+      "revocation_gate": "not_applicable — receipts are immutable signed artifacts; no revocation mechanism by design",
+      "policy_gate": "supported — Cedar policy digest in each receipt payload"
+    }
+  },
+  "cedar_policy_evaluation": {
+    "description": "Cedar policy evaluation receipts. Each receipt is the signed decision artifact produced by protect-mcp after evaluating a Cedar isAuthorized() call.",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "vectors": [
+      {
+        "name": "Cedar allow (signed-known agent, read_database)",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:protect-mcp",
+          "issued_at": "2026-04-01T10:00:00Z",
+          "payload": {
+            "decision": "allow",
+            "policy_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "scope": "production",
+            "tool": "read_database",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "cedar_policy_match",
+            "request_id": "req_cedar_allow_001",
+            "cedar_action": "Action::\"call_tool\"",
+            "cedar_principal": "User::\"agent-47b3\"",
+            "cedar_resource": "McpServer::\"analytics\""
+          },
+          "signature": "cff8b3d095ac7951dddea4c4841536eb824678e33ba1c189b762be8bdf253a20c022d7f5350f4c4c0f74ae184b6bf5b40ca692d8eb6018001bf6f26d1a469103"
+        },
+        "hash": "6f8dea6601bda24452d1e1ef83659f7e122283f395ff3d9fdab35f64c81d817b",
+        "expected_result": "valid",
+        "verification_command": "npx @veritasacta/verify cedar-allow.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+      },
+      {
+        "name": "Cedar deny (unknown agent, delete_user)",
+        "artifact": {
+          "v": 2,
+          "type": "gateway_restraint",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:protect-mcp",
+          "issued_at": "2026-04-01T10:00:05Z",
+          "payload": {
+            "decision": "deny",
+            "policy_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "scope": "production",
+            "tool": "delete_user",
+            "tier": "unknown",
+            "mode": "enforce",
+            "reason_code": "cedar_policy_deny",
+            "request_id": "req_cedar_deny_001",
+            "cedar_action": "Action::\"call_tool\"",
+            "cedar_principal": "User::\"agent-unknown\"",
+            "cedar_resource": "McpServer::\"admin\""
+          },
+          "signature": "63061a3833923c09de28948ceb586895450d22bd1917a8c25f0e4260ac8b2722f5252980aad848422753e364392ec8ac1981992d08c8686b3bc34886b76dd10b"
+        },
+        "hash": "eb4b2e53b1e16220e6f228c27b3bca7146f7fbc59cc07e3709e4aed1901468f8",
+        "expected_result": "valid",
+        "verification_command": "npx @veritasacta/verify cedar-deny.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+      },
+      {
+        "name": "Cedar conditional allow (scope narrowed, write_file)",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:protect-mcp",
+          "issued_at": "2026-04-01T10:00:10Z",
+          "payload": {
+            "decision": "allow",
+            "policy_digest": "sha256:a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a",
+            "scope": "production",
+            "tool": "write_file",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "cedar_conditional",
+            "request_id": "req_cedar_conditional_001",
+            "cedar_action": "Action::\"write_file\"",
+            "cedar_principal": "User::\"agent-47b3\"",
+            "cedar_resource": "McpServer::\"storage\"",
+            "conditions": [
+              "restrict:path=/tmp/**",
+              "monitor:write_ops"
+            ]
+          },
+          "signature": "f7cff29fbdf7fa701e2ee36b76ce08bae61af90a561b096e7f2ab9e3477bbc88c3f6ca057c281fea52e516d9b9e74cd4d33cbba3fd9805850b73d9bd462f890f"
+        },
+        "hash": "7e1d39bd60e4cdb882c20df99b347646fa4b26511e7966d24022f0db20df29a5",
+        "expected_result": "valid",
+        "verification_command": "npx @veritasacta/verify cedar-conditional.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+      }
+    ]
+  },
+  "receipt_chain": {
+    "description": "Receipt chain: PM → analyst → trader → execution → settlement. Each receipt carries parent_receipt_id pointing to the hash of the previous receipt. A verifier walks the chain backwards checking ed25519.verify() at each step. If any link fails, the chain is broken.",
+    "chain_length": 5,
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "verification_command": "Walk from step 5 to step 1: at each step, verify signature and confirm parent_receipt_id matches the hash of the previous receipt.",
+    "steps": [
+      {
+        "name": "Step 1: task_delegation",
+        "issuer": "sb:pm",
+        "parent_receipt_id": null,
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:pm",
+          "issued_at": "2026-04-01T09:00:00Z",
+          "payload": {
+            "step": "task_delegation",
+            "decision": "allow",
+            "policy_digest": "sha256:pm_policy_v3",
+            "scope": "trade-analysis",
+            "tool": "delegate_task",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "pm_authorized",
+            "request_id": "req_chain_001",
+            "delegated_to": "sb:agent:analyst",
+            "task": "Analyze AAPL position risk and recommend adjustment"
+          },
+          "signature": "b40b20c01c34d18a9e978d55ea5691c0b3b62cb74935fdc1a4cea8135102510b23112bfcd8e81b06f6926e55a99ca7af96c794de587044e9aae9c90651c0d90d"
+        },
+        "hash": "035a529378ccf4588efbc79e4604281cd32aece88032d563d185f925164448f6",
+        "signature": "b40b20c01c34d18a9e978d55ea5691c0b3b62cb74935fdc1a4cea8135102510b23112bfcd8e81b06f6926e55a99ca7af96c794de587044e9aae9c90651c0d90d",
+        "verification": {
+          "valid": true
+        }
+      },
+      {
+        "name": "Step 2: analysis_complete",
+        "issuer": "sb:analyst",
+        "parent_receipt_id": "035a529378ccf4588efbc79e4604281cd32aece88032d563d185f925164448f6",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:analyst",
+          "issued_at": "2026-04-01T09:15:00Z",
+          "payload": {
+            "step": "analysis_complete",
+            "decision": "allow",
+            "policy_digest": "sha256:analyst_policy_v2",
+            "scope": "trade-analysis",
+            "tool": "run_analysis",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "analysis_pass",
+            "request_id": "req_chain_002",
+            "recommendation": "reduce_position",
+            "confidence": 0.87,
+            "parent_receipt_id": "035a529378ccf4588efbc79e4604281cd32aece88032d563d185f925164448f6"
+          },
+          "signature": "978719ce238223856ba22c56e35719e2f2357b431627fac56ad250f8b20d51d6b8bd6e2d53ee9b31ed8dcbd74fd70297b084cb85d584e7ce46ce50cdc2624006"
+        },
+        "hash": "d8110b68aba9c9251726f3d046de6a968654355e83e1585444ee1efdce530fb0",
+        "signature": "978719ce238223856ba22c56e35719e2f2357b431627fac56ad250f8b20d51d6b8bd6e2d53ee9b31ed8dcbd74fd70297b084cb85d584e7ce46ce50cdc2624006",
+        "verification": {
+          "valid": true
+        }
+      },
+      {
+        "name": "Step 3: trade_preparation",
+        "issuer": "sb:trader",
+        "parent_receipt_id": "d8110b68aba9c9251726f3d046de6a968654355e83e1585444ee1efdce530fb0",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:trader",
+          "issued_at": "2026-04-01T09:30:00Z",
+          "payload": {
+            "step": "trade_preparation",
+            "decision": "allow",
+            "policy_digest": "sha256:trader_policy_v1",
+            "scope": "trade-execution",
+            "tool": "prepare_order",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "within_limits",
+            "request_id": "req_chain_003",
+            "instrument": "AAPL",
+            "side": "sell",
+            "quantity": 500,
+            "parent_receipt_id": "d8110b68aba9c9251726f3d046de6a968654355e83e1585444ee1efdce530fb0"
+          },
+          "signature": "c1a6ce40fec6ee1a92e4b88fbdf765418752010c95a8a3b6fad832eb0abeae4942b7cdb751102ddb8f44013e781259bfa46be284c9e477a8dec69aa48148fd00"
+        },
+        "hash": "9dd07b5c65de7fcb90f1d0a9c92a4d5a2826f5506165627ac8b983e64933a936",
+        "signature": "c1a6ce40fec6ee1a92e4b88fbdf765418752010c95a8a3b6fad832eb0abeae4942b7cdb751102ddb8f44013e781259bfa46be284c9e477a8dec69aa48148fd00",
+        "verification": {
+          "valid": true
+        }
+      },
+      {
+        "name": "Step 4: execution",
+        "issuer": "sb:execution",
+        "parent_receipt_id": "9dd07b5c65de7fcb90f1d0a9c92a4d5a2826f5506165627ac8b983e64933a936",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:execution",
+          "issued_at": "2026-04-01T09:30:15Z",
+          "payload": {
+            "step": "execution",
+            "decision": "allow",
+            "policy_digest": "sha256:execution_policy_v1",
+            "scope": "trade-execution",
+            "tool": "execute_order",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "order_filled",
+            "request_id": "req_chain_004",
+            "fill_price": 185.42,
+            "fill_quantity": 500,
+            "venue": "NYSE",
+            "parent_receipt_id": "9dd07b5c65de7fcb90f1d0a9c92a4d5a2826f5506165627ac8b983e64933a936"
+          },
+          "signature": "9d52a9e0320ce827fe1c3379a9f92a2667c91e6a757e20f93a42d83deef596110463beb6402c168606a6c2fbdf38b50e1d77ac18048cf415e3cff9d737449b09"
+        },
+        "hash": "702b20e48ca70ec1762c33dde1ea1025c638d417dd55fa8c91eba62919c008a0",
+        "signature": "9d52a9e0320ce827fe1c3379a9f92a2667c91e6a757e20f93a42d83deef596110463beb6402c168606a6c2fbdf38b50e1d77ac18048cf415e3cff9d737449b09",
+        "verification": {
+          "valid": true
+        }
+      },
+      {
+        "name": "Step 5: settlement",
+        "issuer": "sb:settlement",
+        "parent_receipt_id": "702b20e48ca70ec1762c33dde1ea1025c638d417dd55fa8c91eba62919c008a0",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:settlement",
+          "issued_at": "2026-04-01T09:35:00Z",
+          "payload": {
+            "step": "settlement",
+            "decision": "allow",
+            "policy_digest": "sha256:settlement_policy_v1",
+            "scope": "trade-settlement",
+            "tool": "confirm_settlement",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "settled",
+            "request_id": "req_chain_005",
+            "settlement_ref": "STL-2026-04-01-00042",
+            "settled_at": "2026-04-03T16:00:00Z",
+            "parent_receipt_id": "702b20e48ca70ec1762c33dde1ea1025c638d417dd55fa8c91eba62919c008a0"
+          },
+          "signature": "694082cf86c883c0d110059269f853b753e3d5eff23beadd9b00ff2173092a9fba995b6a2cace75c4a35ef4ba355ef47ca3e3ac5069c5248091cebd256efa009"
+        },
+        "hash": "8a18c5a2c8b4dfafb5ddbf97c0a75255aa5be82690ce9b455e3709bb919e80f4",
+        "signature": "694082cf86c883c0d110059269f853b753e3d5eff23beadd9b00ff2173092a9fba995b6a2cace75c4a35ef4ba355ef47ca3e3ac5069c5248091cebd256efa009",
+        "verification": {
+          "valid": true
+        }
+      }
+    ]
+  },
+  "issuer_blind_verification": {
+    "description": "Issuer-blind verification. The verifier needs only the receipt JSON and the public key. No network calls, no DID resolution, no contact with the issuer. The issuer identity is not required for verification — trust the math, not the institution.",
+    "verification_model": "offline",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "vectors": [
+      {
+        "name": "Valid receipt (issuer-blind verification)",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:issuer-blind-demo",
+          "issued_at": "2026-04-01T12:00:00Z",
+          "payload": {
+            "decision": "allow",
+            "policy_digest": "sha256:blind_policy_v1",
+            "scope": "any-service",
+            "tool": "any_tool",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "policy_match",
+            "request_id": "req_blind_001"
+          },
+          "signature": "fd00ee3bc82ccf676b8b09e14fba42549d077d76c399f083e7aeab39cf54cee2f81ec043e722834be9e6aaeae54e4924878dcd5ba94b2b2c13a80adccda3f204"
+        },
+        "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "hash": "b948c022376f2af1d34115d6587c81234ab5662764c569dfae94a285c0809e6c",
+        "expected_exit_code": 0,
+        "expected_result": "valid",
+        "verification_command": "npx @veritasacta/verify blind-valid.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "verification": {
+          "valid": true
+        }
+      },
+      {
+        "name": "Tampered receipt (decision changed from allow to deny)",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "sb:issuer-blind-demo",
+          "issued_at": "2026-04-01T12:00:00Z",
+          "payload": {
+            "decision": "deny",
+            "policy_digest": "sha256:blind_policy_v1",
+            "scope": "any-service",
+            "tool": "any_tool",
+            "tier": "signed-known",
+            "mode": "enforce",
+            "reason_code": "policy_match",
+            "request_id": "req_blind_001"
+          },
+          "signature": "fd00ee3bc82ccf676b8b09e14fba42549d077d76c399f083e7aeab39cf54cee2f81ec043e722834be9e6aaeae54e4924878dcd5ba94b2b2c13a80adccda3f204"
+        },
+        "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "tampered_field": "payload.decision",
+        "original_value": "allow",
+        "tampered_value": "deny",
+        "expected_exit_code": 1,
+        "expected_result": "invalid",
+        "verification_command": "npx @veritasacta/verify blind-tampered.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "verification": {
+          "valid": false
+        },
+        "note": "Signature was computed over the original payload. Changing any field breaks the signature. The verifier does not need to know what changed — only that the artifact no longer matches."
+      }
+    ]
+  }
+}
