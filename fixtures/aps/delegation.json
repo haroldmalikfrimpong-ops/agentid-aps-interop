@@ -1,0 +1,43 @@
+{
+  "description": "APS delegation artifact — a signed Ed25519 delegation from a principal to an AgentID-identified agent. Scope-gated, spend-capped, time-bounded. This is the standalone artifact referenced by the scenario fixtures in fixtures/aps/v1/ and by APS receipts that cite this delegation's id.",
+  "agent_id": "agent_interop_test_001",
+  "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "delegation": {
+    "delegationId": "del_05ab9363-281",
+    "delegatedTo": "44386e088375caa575f0330605f5a7bf945699c8fbe9892b74d89dda036429d1",
+    "delegatedBy": "48fac2c221dbfae509943ae3d2b38418a775ea22fe2de19da3d801efa24a13f6",
+    "scope": [
+      "data:read",
+      "api:get"
+    ],
+    "createdAt": "2026-04-07T19:21:12.539Z",
+    "notBefore": "2026-04-07T19:21:12.539Z",
+    "expiresAt": "2026-04-08T19:21:12.539Z",
+    "spendLimit": 10000,
+    "spentAmount": 0,
+    "maxDepth": 1,
+    "currentDepth": 0,
+    "signature": "957b293b685606200483a91b64c95f59c200c7e61165f31c0c25d615eaa0d20f558c17ff7b5c92196d6c3f36bc4ebc1b01f0d704c12b0ad4cb06a6e68b59a60b"
+  },
+  "canonicalization": "JCS (RFC 8785)",
+  "signature_alg": "Ed25519",
+  "verification": {
+    "algorithm": "Ed25519",
+    "public_key": "48fac2c221dbfae509943ae3d2b38418a775ea22fe2de19da3d801efa24a13f6",
+    "signature": "957b293b685606200483a91b64c95f59c200c7e61165f31c0c25d615eaa0d20f558c17ff7b5c92196d6c3f36bc4ebc1b01f0d704c12b0ad4cb06a6e68b59a60b",
+    "expected": true,
+    "note": "Signature is over the JCS-canonicalized delegation payload minus the signature field itself. Independently verifiable with any Ed25519 library against delegatedBy public key."
+  },
+  "source": {
+    "generated_by": "agent-passport-system",
+    "sdk_version": "1.41.0",
+    "fixture_form": "structural+signed",
+    "extracted_from": "interop/fixtures/happy-path.json (agent-passport-system repo)"
+  },
+  "interop_notes": {
+    "audit_chain_position": "This delegation is the authorization step. AgentID answers 'who is this agent'; this delegation answers 'what may this agent do'. A governance receipt (see receipt.json in this directory) references this delegationId to complete the audit chain.",
+    "scope_interpretation": "Scope strings are namespaced verbs. 'data:read' permits reading data sources; 'api:get' permits HTTP GET calls. Non-matching actions deny.",
+    "spendLimit_semantics": "Cumulative spend ceiling in USD. Actions that would push spentAmount above spendLimit are denied regardless of scope match.",
+    "maxDepth": "Maximum sub-delegation depth. maxDepth=1 means this delegation can sub-delegate once (to depth 1); beyond that, any further sub-delegation denies."
+  }
+}
