@@ -1,0 +1,70 @@
+{
+  "description": "APS governance receipt artifact — a signed record that a specific action was executed under a specific delegation by an AgentID-identified agent. References both the delegationId (from delegation.json) and the AgentID credential hash (from README.json). Completes the identity + authorization + receipt audit chain.",
+  "agent_id": "agent_interop_test_001",
+  "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "receipt": {
+    "receiptId": "rcpt_96fdc8d1-ddf",
+    "version": "1.1",
+    "timestamp": "2026-04-07T19:21:12.542Z",
+    "agentId": "agent_interop_test_001",
+    "delegationId": "del_05ab9363-281",
+    "action": {
+      "type": "data:read",
+      "target": "customer-db",
+      "scopeUsed": "data:read",
+      "timestamp": "2026-04-07T19:21:12.540Z"
+    },
+    "result": {
+      "success": true,
+      "output": "Query returned 42 rows"
+    },
+    "delegationChain": [
+      "48fac2c221dbfae509943ae3d2b38418a775ea22fe2de19da3d801efa24a13f6",
+      "44386e088375caa575f0330605f5a7bf945699c8fbe9892b74d89dda036429d1"
+    ],
+    "credentialRefs": [
+      {
+        "type": "agentid",
+        "hash": "f6879c204f4148f83c1b298281ffa79fac7ba8eeaaafb9cb042e4572079a05b2",
+        "hash_alg": "sha256",
+        "note": "References the AgentID credential hash published in fixtures/aps/README.json. A verifier can check the hash against the AgentID attestation payload to confirm identity-authorization binding."
+      }
+    ],
+    "signature": "ad57c383d143feca075c8abdf1fc3d4b4755cd410e75d4916e5c9647d6651243b7b02c91d610cbe35402f5bea82e1ec2f6e07509049c7bcd409929d8c9b0ed09"
+  },
+  "canonicalization": "JCS (RFC 8785)",
+  "signature_alg": "Ed25519",
+  "verification": {
+    "algorithm": "Ed25519",
+    "public_key": "44386e088375caa575f0330605f5a7bf945699c8fbe9892b74d89dda036429d1",
+    "signature": "ad57c383d143feca075c8abdf1fc3d4b4755cd410e75d4916e5c9647d6651243b7b02c91d610cbe35402f5bea82e1ec2f6e07509049c7bcd409929d8c9b0ed09",
+    "expected": true,
+    "note": "Signature is over the JCS-canonicalized receipt payload minus the signature field itself. Independently verifiable with any Ed25519 library against the last delegationChain public key (the executing agent)."
+  },
+  "audit_chain": {
+    "identity_step": {
+      "system": "AgentID",
+      "question": "Who is this agent?",
+      "answer_reference": "credentialRefs[0].hash → fixtures/agentid/registration.json and ed25519-binding.json",
+      "result": "agent_interop_test_001 bound to Ed25519 key 207a067892821e25d770f1fba0c47c11ff4b813e54162ece9eb839e076231ab6, trust level L2 verified"
+    },
+    "authorization_step": {
+      "system": "APS",
+      "question": "What may this agent do?",
+      "answer_reference": "delegationId → delegation.json in this directory",
+      "result": "Delegation permits data:read and api:get, spend cap 10000 USD, valid 2026-04-07 through 2026-04-08"
+    },
+    "execution_step": {
+      "system": "APS",
+      "question": "What did this agent actually do?",
+      "answer_reference": "This receipt",
+      "result": "data:read on customer-db executed successfully, 42 rows returned"
+    }
+  },
+  "source": {
+    "generated_by": "agent-passport-system",
+    "sdk_version": "1.41.0",
+    "fixture_form": "structural+signed",
+    "extracted_from": "interop/fixtures/happy-path.json (agent-passport-system repo)"
+  }
+}
