@@ -1,0 +1,391 @@
+{
+  "_meta": {
+    "system": "AEOESS Agent Passport System (APS)",
+    "version": "1.42.0",
+    "generated_at": "2026-04-15T00:00:00Z",
+    "keypair": {
+      "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+      "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+      "jwk": {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+        "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+        "use": "sig"
+      },
+      "note": "RFC 8032 Test Vector #1 — do NOT use in production"
+    },
+    "canonicalization": "JCS (RFC 8785) — JSON Canonicalization Scheme",
+    "signing_algorithm": "Ed25519 (RFC 8032)",
+    "envelope_format": "APS signed artifact envelope (v2)",
+    "verification": {
+      "cli": "node artifacts/verify-aps-fixture.js <artifact-file.json> --key <public_key_hex>",
+      "sdk": "agent-passport-system ≥ 1.42.0 — import { canonicalizeJCS } and verify via crypto.verify",
+      "exit_codes": {
+        "0": "signature valid — proven authentic",
+        "1": "signature invalid — proven tampered",
+        "2": "verifier error — malformed input or missing key"
+      }
+    },
+    "interop_gates": {
+      "identity_gate": "supported — did:aps + did:key + did:web resolution; Ed25519 signature over JCS-canonical passport",
+      "delegation_gate": "supported — monotonic narrowing enforced; parent field links chain; scope ⊆ parent.scope required",
+      "wallet_state_gate": "partial — bound_wallet envelope ships with wallet_ref + proof_of_control; Solana extension lands in SDK ≥ 1.43",
+      "revocation_gate": "supported — cascade revocation by issuer signature; revocation receipts not in this v1 batch (see v1.1)",
+      "policy_gate": "supported — policy_digest in decision_receipt payload; full policy-eval fixtures in v1.1"
+    },
+    "pending": {
+      "solana_bound_wallet": "SDK extension targeted for 1.43.0; shape included here is forward-compatible but not yet SDK-validated"
+    }
+  },
+  "delegation_chain_receipts": {
+    "description": "Three-step receipt sequence: intent → decision → execution. Each receipt links to the previous via parent_receipt_id (sha256 over JCS-canonical form of the full signed artifact).",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "verification_command": "Walk execution → decision → intent; verify Ed25519 at each step; confirm parent_receipt_id matches sha256(jcs(previous_artifact)).",
+    "vectors": [
+      {
+        "name": "Step 1: intent_receipt (agent declares intent)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js step-1-intent.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "intent_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestPrincipal001",
+          "issued_at": "2026-04-01T09:00:00Z",
+          "payload": {
+            "step": "intent_declared",
+            "agent": "did:aps:z6MkTestAgent042",
+            "intent": "transfer_funds",
+            "scope_requested": [
+              "transfer:usd:≤100"
+            ],
+            "request_id": "req_delegchain_001",
+            "parent_receipt_id": null
+          },
+          "signature": "48ba8717ad1e405e51cb06f74e72fbb32ebaa2626e0b14f1154a088eac2f7840461d47ae38e9743f519b9b5a76b8f7c0485d5cbbc83dc494b1b3bfcba0b2fa0f"
+        },
+        "hash": "8d5e52433ce7abb0b2450f685ed81ff045b51ac0c69bf7a2056ad540f908d76d"
+      },
+      {
+        "name": "Step 2: decision_receipt (gateway approves under active scope)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js step-2-decision.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "decision_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkGatewayAeoess",
+          "issued_at": "2026-04-01T09:00:01Z",
+          "payload": {
+            "step": "gateway_decision",
+            "decision": "allow",
+            "agent": "did:aps:z6MkTestAgent042",
+            "scope_granted": [
+              "transfer:usd:≤100"
+            ],
+            "active_delegation": "del_001",
+            "policy_digest": "sha256:8045b25e6dc90f6eaa535334320d8c735b51d09f7d79d40b126fe0174591221b",
+            "request_id": "req_delegchain_001",
+            "parent_receipt_id": "8d5e52433ce7abb0b2450f685ed81ff045b51ac0c69bf7a2056ad540f908d76d"
+          },
+          "signature": "6a012868a41fbb40d0614d4cd3eab1f8a04ab11a76d9455bb16020d93b022eeccce0f0837195b2147741b9c89b70500f442d9d7cdd0d6e8e09d13682c3d23c05"
+        },
+        "hash": "c677e6f63f69ca6d4acd3029d3cbaef21b2b9022b15646bce4988f9767bb3deb"
+      },
+      {
+        "name": "Step 3: action_receipt (action committed)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js step-3-execution.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "action_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T09:00:02Z",
+          "payload": {
+            "step": "action_committed",
+            "agent": "did:aps:z6MkTestAgent042",
+            "action": "transfer_funds",
+            "amount": {
+              "value": 50,
+              "currency": "USD"
+            },
+            "counterparty": "did:aps:z6MkCounterparty007",
+            "action_ref": "act_296ee64a09616868",
+            "request_id": "req_delegchain_001",
+            "parent_receipt_id": "c677e6f63f69ca6d4acd3029d3cbaef21b2b9022b15646bce4988f9767bb3deb"
+          },
+          "signature": "28290b5361e3967cfe772617c12b685a062b3460dc2c80c1e4c01c29d15dd8a10f332920b0010a9925e09fadb7a3e788d6c38443c4714c1d066bbb131f02890b"
+        },
+        "hash": "8daac7f93d92ae38b2d0c9a9837ec303dc07fe6475e6a755a5c082d24228700c"
+      }
+    ]
+  },
+  "monotonic_narrowing": {
+    "description": "Authority can only decrease across a delegation chain. Parent grants [read, write, transfer]; child narrows to [read, write]; grandchild narrows to [read]. A fourth artifact demonstrates an attempted scope expansion — it is correctly Ed25519-signed by the intermediate delegator, but its scope claims `publish`, which the parent never granted. Any compliant verifier MUST reject it at delegation_gate despite the valid signature.",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "vectors": [
+      {
+        "name": "Parent delegation (broad: read, write, transfer)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js mn-parent.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "delegation",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestPrincipal001",
+          "issued_at": "2026-04-01T10:00:00Z",
+          "payload": {
+            "delegator": "did:aps:z6MkTestPrincipal001",
+            "delegate": "did:aps:z6MkTestAgent042",
+            "scope": [
+              "read",
+              "write",
+              "transfer"
+            ],
+            "spend_limit": {
+              "amount": 1000,
+              "currency": "USD",
+              "period": "day"
+            },
+            "not_before": "2026-04-01T00:00:00Z",
+            "not_after": "2026-05-01T00:00:00Z",
+            "nonce": "mn-parent-001",
+            "parent": null
+          },
+          "signature": "b9c5fc20589499cbad8c69ebb402d054b8dcd7d1da7741388de4a76b0b6a23670e2bc35687e984669a5be9bb874a3b25750d1049019732a1175ec42efb2cf707"
+        },
+        "hash": "9e2d86fd5419f2f1198bcff37091b0fb5b13cd050647c5adb33d745f7f4b4d0b"
+      },
+      {
+        "name": "Child delegation (narrowed: read, write)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js mn-child.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "delegation",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T10:00:01Z",
+          "payload": {
+            "delegator": "did:aps:z6MkTestAgent042",
+            "delegate": "did:aps:z6MkTestAgent108",
+            "scope": [
+              "read",
+              "write"
+            ],
+            "spend_limit": {
+              "amount": 500,
+              "currency": "USD",
+              "period": "day"
+            },
+            "not_before": "2026-04-01T00:00:00Z",
+            "not_after": "2026-05-01T00:00:00Z",
+            "nonce": "mn-child-001",
+            "parent": "9e2d86fd5419f2f1198bcff37091b0fb5b13cd050647c5adb33d745f7f4b4d0b"
+          },
+          "signature": "c670cfb2f9f22a0a4db7a88406eb50ea73ec86b3fec31bcc11cab29a3ae1b1a240efaa0e2628a050c193a0dadbbc5ba0ff7b0936e2935c7a19be7a84a0f69a05"
+        },
+        "hash": "f328566a6f84af97c82fcc74ecb5925bf848488480b1235bc8d90f9e2d319e07"
+      },
+      {
+        "name": "Grandchild delegation (narrowed: read)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js mn-grandchild.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "delegation",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent108",
+          "issued_at": "2026-04-01T10:00:02Z",
+          "payload": {
+            "delegator": "did:aps:z6MkTestAgent108",
+            "delegate": "did:aps:z6MkTestAgent211",
+            "scope": [
+              "read"
+            ],
+            "spend_limit": {
+              "amount": 100,
+              "currency": "USD",
+              "period": "day"
+            },
+            "not_before": "2026-04-01T00:00:00Z",
+            "not_after": "2026-05-01T00:00:00Z",
+            "nonce": "mn-grandchild-001",
+            "parent": "f328566a6f84af97c82fcc74ecb5925bf848488480b1235bc8d90f9e2d319e07"
+          },
+          "signature": "6d38312131b55ef0fd672da8dbb146609a726d4c538208e0c08f10b646b4725673646a62980c52b0026b89943d27d584411c0e25bbdf4431ae5962fdca03f909"
+        },
+        "hash": "df98d2678729d09eddcca8fac2d2050328a996145415643cda3cdb0f5b47f450"
+      },
+      {
+        "name": "Invalid expansion attempt (child claims publish — parent never granted)",
+        "expected_result": "signature_valid_but_delegation_gate_must_reject",
+        "delegation_gate_reason": "scope contains \"publish\" which is not a subset of parent.scope [read, write, transfer]",
+        "verification_command": "node artifacts/verify-aps-fixture.js mn-invalid-expansion.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "delegation",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T10:00:03Z",
+          "payload": {
+            "delegator": "did:aps:z6MkTestAgent042",
+            "delegate": "did:aps:z6MkTestAgent911",
+            "scope": [
+              "read",
+              "write",
+              "publish"
+            ],
+            "spend_limit": {
+              "amount": 500,
+              "currency": "USD",
+              "period": "day"
+            },
+            "not_before": "2026-04-01T00:00:00Z",
+            "not_after": "2026-05-01T00:00:00Z",
+            "nonce": "mn-invalid-001",
+            "parent": "9e2d86fd5419f2f1198bcff37091b0fb5b13cd050647c5adb33d745f7f4b4d0b"
+          },
+          "signature": "bbf8d5bf307ee79221522413039a3989b7db9679ffbcaf2469c39e6070e182133777e1c3f3f95a7a5765b84b1cbf57dec1b669dfcb622792a3f91f2527dd4f03"
+        },
+        "hash": "a8cff337245b90065204feba55647e0951a5efaa67d1198f264309236b7831a1"
+      }
+    ]
+  },
+  "action_receipt_offline_verification": {
+    "description": "Offline verification demo. One valid ActionReceipt signed with the test keypair and one tampered copy where `action` was flipped from read_resource to delete_resource. Ed25519.verify() rejects the tampered artifact using only the public key — no network, no issuer contact.",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519",
+    "vectors": [
+      {
+        "name": "Valid action receipt",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js action-valid.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "action_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T11:00:00Z",
+          "payload": {
+            "agent": "did:aps:z6MkTestAgent042",
+            "action": "read_resource",
+            "resource": "urn:aps:resource:market-data-aapl",
+            "action_ref": "act_094093b8067be793",
+            "request_id": "req_action_001",
+            "parent_receipt_id": null
+          },
+          "signature": "dc292089df4503f88d8e072033c6d452ffcf9aeab75f98d564cf111f2e44e5772aaca6fc1062dc47b4357a139dcdb62f89ea211728e2d59fbc3db254b71c4807"
+        },
+        "hash": "037bdbb56c67625665b440da9afb1b7590529b33826e955eb19cd1c1cddc4361"
+      },
+      {
+        "name": "Tampered action receipt (action field mutated post-sign)",
+        "expected_result": "invalid",
+        "tamper_description": "payload.action changed from \"read_resource\" to \"delete_resource\" after signing; signature over original JCS-canonical form no longer verifies",
+        "verification_command": "node artifacts/verify-aps-fixture.js action-tampered.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "action_receipt",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T11:00:00Z",
+          "payload": {
+            "agent": "did:aps:z6MkTestAgent042",
+            "action": "delete_resource",
+            "resource": "urn:aps:resource:market-data-aapl",
+            "action_ref": "act_094093b8067be793",
+            "request_id": "req_action_001",
+            "parent_receipt_id": null
+          },
+          "signature": "dc292089df4503f88d8e072033c6d452ffcf9aeab75f98d564cf111f2e44e5772aaca6fc1062dc47b4357a139dcdb62f89ea211728e2d59fbc3db254b71c4807"
+        },
+        "hash": "68bf390050c5bad9ebfca8e4965e253c4e81ad496c0c65def733743f111d0e99"
+      }
+    ]
+  },
+  "bound_wallet": {
+    "description": "BoundWallet envelopes linking an APS agent DID to an external on-chain wallet. Each carries wallet_ref (CAIP-10 plus chain-native fields) and proof_of_control. The APS signature binds the agent identity; the external_signature inside proof_of_control binds the wallet side (not re-verified by APS).",
+    "canonicalization": "JCS (RFC 8785)",
+    "algorithm": "Ed25519 (APS envelope); external signatures are chain-native",
+    "vectors": [
+      {
+        "name": "EVM wallet binding (eip155:1)",
+        "expected_result": "valid",
+        "verification_command": "node artifacts/verify-aps-fixture.js wallet-evm.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "bound_wallet",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T12:00:00Z",
+          "payload": {
+            "agent": "did:aps:z6MkTestAgent042",
+            "wallet_ref": {
+              "chain": "evm",
+              "chain_id": 1,
+              "address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7",
+              "caip10": "eip155:1:0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+            },
+            "binding_nonce": "bw-evm-001",
+            "proof_of_control": {
+              "method": "signed_challenge",
+              "challenge": "aps-bind-2026-04-01-evm-001",
+              "external_signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "external_signature_format": "eth_sign"
+            }
+          },
+          "signature": "8be6b8ad7783284ec292256e017affa8b53e1329aa037d66af968e4e29360e5022fa4c4394771b3453a1a87bf3d3a7387be231b461a43ab1a3c42c7e2b8e8c0e"
+        },
+        "hash": "ded8b5319c38913082d45ded5f5973a346e3a4bb45c3babce28d785ef9793160"
+      },
+      {
+        "name": "Solana wallet binding (mainnet-beta)",
+        "expected_result": "valid",
+        "_pending_solana_extension": true,
+        "note": "Shape is forward-compatible with APS SDK ≥ 1.43 Solana extension. APS envelope signature verifies today; SDK-side wallet-ref parser lands in 1.43.",
+        "verification_command": "node artifacts/verify-aps-fixture.js wallet-solana.json --key d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "artifact": {
+          "v": 2,
+          "type": "bound_wallet",
+          "algorithm": "ed25519",
+          "kid": "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k",
+          "issuer": "did:aps:z6MkTestAgent042",
+          "issued_at": "2026-04-01T12:00:01Z",
+          "payload": {
+            "agent": "did:aps:z6MkTestAgent042",
+            "wallet_ref": {
+              "chain": "solana",
+              "cluster": "mainnet-beta",
+              "address": "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
+              "caip10": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy"
+            },
+            "binding_nonce": "bw-sol-001",
+            "proof_of_control": {
+              "method": "signed_challenge",
+              "challenge": "aps-bind-2026-04-01-sol-001",
+              "external_signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "external_signature_format": "ed25519_solana"
+            }
+          },
+          "signature": "3fe6018ed07dd8470e51290f763d0ee233843a233099b83a29366a8be4c4a4f93131c648c85cd07aff54abba50759c0c18d5da060e38b33cd1357b4310e89c06"
+        },
+        "hash": "d51ba3eb7ffd7430a492eaa8eaea2c19b5b6327ce5832785fd94d7e07d37f4d6"
+      }
+    ]
+  }
+}
