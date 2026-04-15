@@ -63,7 +63,7 @@ No DID resolution, no network, no issuer contact. The artifact plus the public k
 APS envelope binds an agent DID to an external on-chain wallet. Two chain examples:
 
 - **EVM** — `eip155:1`, CAIP-10 address, `eth_sign` proof-of-control stub
-- **Solana** — `mainnet-beta`, `_pending_solana_extension: true` flag
+- **Solana** — `mainnet-beta`, `_pending_solana_extension: true` (lifts in SDK 1.43+, where base58 wallet_ref validation lands; fixture shape is forward-compatible)
 
 The APS Ed25519 signature proves the agent claimed the binding. The `external_signature` inside `proof_of_control` is the wallet-side proof (ECDSA for EVM, Ed25519 for Solana) — APS does not re-verify it; chain-native verifiers do.
 
@@ -76,7 +76,7 @@ The APS Ed25519 signature proves the agent claimed the binding. The `external_si
 | `identity_gate` | `supported` | did:aps, did:key, did:web resolution; Ed25519 over JCS-canonical passport |
 | `delegation_gate` | `supported` | Monotonic narrowing enforced; scope ⊆ parent.scope required; fixture demonstrates both valid narrowing and invalid expansion |
 | `wallet_state_gate` | `partial` | `bound_wallet` envelope with CAIP-10 `wallet_ref` + `proof_of_control`; Solana wallet-ref parser pending SDK 1.43 |
-| `revocation_gate` | `supported` | Cascade revocation by issuer signature; revocation-receipt fixtures land in v1.1 |
+| `revocation_gate` | `partial` | Cascade revocation by issuer signature is implemented in SDK; verifiable revocation-receipt fixtures land in v1.1 |
 | `policy_gate` | `supported` | `policy_digest` in `decision_receipt` payload; full policy-eval fixtures land in v1.1 |
 
 ## Structural Divergences from ScopeBlind / AgentID
