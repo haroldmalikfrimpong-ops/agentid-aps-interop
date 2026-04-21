@@ -1,0 +1,121 @@
+{
+  "composition_version": "composed-v1",
+  "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "issued_at": "2026-04-21T21:00:00Z",
+  "slots": {
+    "agentid": {
+      "agent_id": "agent_interop_test_001",
+      "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "trust_level": 2,
+      "trust_level_label": "L2 \u2014 Verified",
+      "certificate_valid": true,
+      "active": true,
+      "ed25519_bound": true,
+      "wallet_bound": false,
+      "solana_address": "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR",
+      "wallet_address": null,
+      "wallet_chain": null,
+      "bound_addresses": [
+        "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR"
+      ],
+      "subject_binding": "wallet_bound",
+      "issued_at": "2026-04-10T00:00:00Z",
+      "expires_at": "2027-04-10T00:00:00Z",
+      "key_status": "active",
+      "compromised_since": null,
+      "revoked_at": null,
+      "revocation_reason": null,
+      "version": "1.1.0"
+    },
+    "aps": {
+      "version": "aps-v2-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:gateway.aeoess.com",
+      "delegation_chain": [
+        {
+          "hop": 0,
+          "delegator_did": "did:aps:z6MkHumanPrincipalInteropTest001",
+          "delegate_did": "did:aps:z6MkIntermediaryOrchestrator",
+          "scope": [
+            "action:read",
+            "resource:documents"
+          ],
+          "not_before": "2026-04-15T00:00:00Z",
+          "not_after": "2026-07-15T00:00:00Z",
+          "revoked_at": "2026-04-19T08:30:00Z",
+          "revocation_reason": "principal_rotated_sub_delegation_key"
+        },
+        {
+          "hop": 1,
+          "delegator_did": "did:aps:z6MkIntermediaryOrchestrator",
+          "delegate_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "scope": [
+            "action:read",
+            "resource:documents"
+          ],
+          "not_before": "2026-04-16T00:00:00Z",
+          "not_after": "2026-07-15T00:00:00Z"
+        }
+      ],
+      "delegation_chain_root": "sha256:e75723a86231eb9e771e7670776997cb6743551d435ef3ba49e2072ac4a84eb8",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    },
+    "agentgraph": {
+      "version": "agentgraph-scan-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:agentgraph.co",
+      "scan_target": {
+        "url": "https://github.com/agentgraph-co/interop-test-agent",
+        "type": "repo",
+        "artifact_ref": "git:sha256:6c0f4fdeaa2f8b6ce0c3f0f5e8a4a9f1c7e6d5b8",
+        "fetched_at": "2026-04-15T12:00:00Z"
+      },
+      "scanner": {
+        "name": "agentgraph-trust-scanner",
+        "version": "2026.04.1"
+      },
+      "scanned_at": "2026-04-15T12:00:00Z",
+      "gates": {
+        "static_analysis": {
+          "grade": "A",
+          "score": 0.9,
+          "issue_count": 0
+        },
+        "secret_scan": {
+          "grade": "A+",
+          "score": 1.0,
+          "issue_count": 0
+        },
+        "dependency_audit": {
+          "grade": "A",
+          "score": 0.85,
+          "critical": 0,
+          "high": 0
+        }
+      },
+      "overall_grade": "A",
+      "evidence_url": "https://agentgraph.co/api/v1/entities/agent_interop_test_001/attestation/composed-slot",
+      "evidence_hash": "sha256:129c1949896a126ad612d82b8bc50777ce2a712690b3c36d4f50670c8092c8eb",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    }
+  },
+  "expected_composite": {
+    "decision": "deny",
+    "decisive_signal": "aps",
+    "failing_slots": [
+      "aps"
+    ],
+    "reasoning": "AgentID and AgentGraph slots pass (identity current, security posture clean). APS slot fails: hop 0 of the delegation chain (human principal to intermediary orchestrator) was revoked at 2026-04-19T08:30:00Z with reason principal_rotated_sub_delegation_key. APS cascade-revocation invariant: ancestor revocation invalidates all downstream hops regardless of their own structural validity. Naive all-must-pass rule: single-slot denial propagates to composite denial."
+  },
+  "metadata": {
+    "contributors": [
+      "aeoess"
+    ],
+    "fixture_form": "structural",
+    "source_fixtures": {
+      "agentid": "fixtures/agentid/v1/happy-path.json",
+      "aps": "fixtures/aps/v1/revoked-delegation.json",
+      "agentgraph": "fixtures/agentgraph/v1/happy-path.json"
+    }
+  }
+}
