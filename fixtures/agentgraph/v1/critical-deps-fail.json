@@ -1,0 +1,72 @@
+{
+  "scenario": "critical-deps-fail",
+  "description": "Agent's repo depends on a package with 2 critical CVEs. dependency_audit fails; other gates pass. Composite: deny.",
+  "subject": {
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+  },
+  "inputs": {
+    "agentgraph_scan": {
+      "version": "agentgraph-scan-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:agentgraph.co",
+      "scan_target": {
+        "url": "https://github.com/agentgraph-co/interop-test-agent",
+        "type": "repo",
+        "artifact_ref": "git:sha256:6c0f4fdeaa2f8b6ce0c3f0f5e8a4a9f1c7e6d5b8",
+        "fetched_at": "2026-04-15T12:00:00Z"
+      },
+      "scanner": {
+        "name": "agentgraph-trust-scanner",
+        "version": "2026.04.1"
+      },
+      "scanned_at": "2026-04-15T12:00:00Z",
+      "gates": {
+        "static_analysis": {
+          "grade": "B",
+          "score": 0.8,
+          "issue_count": 1
+        },
+        "secret_scan": {
+          "grade": "A+",
+          "score": 1.0,
+          "issue_count": 0
+        },
+        "dependency_audit": {
+          "grade": "D",
+          "score": 0.22,
+          "critical": 2,
+          "high": 4
+        }
+      },
+      "overall_grade": "D",
+      "evidence_url": "https://agentgraph.co/api/v1/entities/agent_interop_test_001/attestation/composed-slot",
+      "evidence_hash": "sha256:1569917e4d8cccface0f4706cdbbb1a27335c52f61572a65bb5dcf31dd9a6d5d",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    }
+  },
+  "expected_result": {
+    "security_gate": "failed",
+    "identity_gate": "not_applicable",
+    "delegation_gate": "not_applicable",
+    "wallet_state_gate": "not_applicable",
+    "revocation_gate": "not_applicable",
+    "policy_gate": "not_applicable",
+    "key_lifecycle_gate": "not_applicable",
+    "composite_decision": "deny",
+    "failing_gates": [
+      "security_gate"
+    ],
+    "reasoning": "dependency_audit gate failed: 2 critical CVEs (CVSS >= 9.0) and 4 high-severity vulnerabilities in direct dependencies. AND-composition: a single failed gate denies regardless of the clean static_analysis and secret_scan results.",
+    "decisive_gate": "security"
+  },
+  "metadata": {
+    "signature_alg": "Ed25519",
+    "canonicalization": "JCS (RFC 8785)",
+    "schema_version": "1.1.0",
+    "fixture_form": "structural",
+    "contributors": [
+      "kenneives"
+    ]
+  }
+}
