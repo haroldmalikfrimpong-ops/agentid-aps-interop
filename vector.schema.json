@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/haroldmalikfrimpong-ops/agentid-aps-interop/blob/main/vector.schema.json",
   "title": "AgentID + APS Interop Test Vector",
-  "description": "Schema for interop test vectors in fixtures/{agentid,aps,composed}/v1/ and forward. Supports both structural-shape (v1) and cryptographically-verifiable (v2) fixture forms.",
+  "description": "Schema for interop test vectors in fixtures/{agentid,aps,agentgraph,composed}/v1/ and forward. Supports both structural-shape (v1) and cryptographically-verifiable (v2) fixture forms. Three input signals are now recognized: agentid_attestation (identity), aps_delegation (authorization), agentgraph_scan (security posture). Composed envelopes carry any two or all three.",
   "type": "object",
   "required": [
     "scenario",
@@ -115,11 +115,118 @@
             "revoked_at": { "type": ["string", "null"], "format": "date-time" },
             "revocation_reason": { "type": ["string", "null"] }
           }
+        },
+        "agentgraph_scan": {
+          "type": "object",
+          "description": "AgentGraph security-scan slot (published shape: agentgraph-scan-v1-structural). Third signal in the composed-v1 envelope — attests to code-level security posture of the subject's linked artifact (repo, package, MCP server, or API endpoint). Structural-shape in v1; v2 will add signed_form alongside AgentID and APS in lockstep.",
+          "required": [
+            "version",
+            "subject_did",
+            "issuer_did",
+            "scan_target",
+            "scanner",
+            "scanned_at",
+            "gates",
+            "evidence_hash",
+            "canonicalization_spec"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "enum": ["agentgraph-scan-v1-structural", "agentgraph-scan-v1-signed"],
+              "description": "Slot schema version. v1-structural for shape-only vectors, v1-signed when signed_form is present."
+            },
+            "subject_did": {
+              "type": "string",
+              "description": "DID of the subject the scan is about — typically shared with the AgentID slot so all three slots in a composed envelope attest about the same agent."
+            },
+            "issuer_did": {
+              "type": "string",
+              "description": "AgentGraph issuer DID. Stable — external verifiers pin to this value.",
+              "const": "did:web:agentgraph.co"
+            },
+            "scan_target": {
+              "type": "object",
+              "required": ["url", "type", "fetched_at"],
+              "properties": {
+                "url": { "type": "string", "format": "uri" },
+                "type": {
+                  "type": "string",
+                  "enum": ["repo", "package", "mcp_server", "api_endpoint"]
+                },
+                "artifact_ref": {
+                  "type": "string",
+                  "description": "Content-addressed reference (e.g. 'git:sha256:<commit>', 'pkg:npm@1.2.3'). Empty string allowed when scanner did not record a digest."
+                },
+                "fetched_at": { "type": "string", "format": "date-time" }
+              }
+            },
+            "scanner": {
+              "type": "object",
+              "required": ["name", "version"],
+              "properties": {
+                "name": { "type": "string", "const": "agentgraph-trust-scanner" },
+                "version": { "type": "string" }
+              }
+            },
+            "scanned_at": { "type": "string", "format": "date-time" },
+            "gates": {
+              "type": "object",
+              "description": "Three published security gates for v1. v2 will add identity_anchor, capability_manifest, runtime_attestation.",
+              "required": ["static_analysis", "secret_scan", "dependency_audit"],
+              "properties": {
+                "static_analysis": {
+                  "type": "object",
+                  "required": ["grade", "score", "issue_count"],
+                  "properties": {
+                    "grade": { "type": "string", "enum": ["A+", "A", "B", "C", "D", "F"] },
+                    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "issue_count": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "secret_scan": {
+                  "type": "object",
+                  "required": ["grade", "score", "issue_count"],
+                  "properties": {
+                    "grade": { "type": "string", "enum": ["A+", "A", "B", "C", "D", "F"] },
+                    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "issue_count": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "dependency_audit": {
+                  "type": "object",
+                  "required": ["grade", "score", "critical", "high"],
+                  "properties": {
+                    "grade": { "type": "string", "enum": ["A+", "A", "B", "C", "D", "F"] },
+                    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "critical": { "type": "integer", "minimum": 0 },
+                    "high": { "type": "integer", "minimum": 0 }
+                  }
+                }
+              }
+            },
+            "overall_grade": {
+              "type": "string",
+              "enum": ["A+", "A", "B", "C", "D", "F"],
+              "description": "Proprietary composite — consumers MAY treat as opaque. The gate-level grades/scores are the interop surface."
+            },
+            "evidence_url": { "type": "string", "format": "uri" },
+            "evidence_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "description": "SHA-256 over the JCS-canonicalized evidence payload. Format: 'sha256:<64 hex chars>'."
+            },
+            "canonicalization_spec": {
+              "type": "string",
+              "const": "jcs-rfc8785+sha256"
+            }
+          }
         }
       },
       "anyOf": [
         { "required": ["agentid_attestation"] },
-        { "required": ["aps_delegation"] }
+        { "required": ["aps_delegation"] },
+        { "required": ["agentgraph_scan"] }
       ]
     },
     "signed_form": {
@@ -199,6 +306,11 @@
           "enum": ["passed", "failed", "deprecated", "revoked", "compromised", "not_applicable"],
           "description": "AgentID key lifecycle gate state. Richer enum than the strict pass/fail gates because the diagnostic distinction between 'rotated', 'revoked', and 'compromised' carries different consumer responses (e.g., 'compromised' invalidates ALL prior receipts, 'rotated' does not)."
         },
+        "security_gate": {
+          "type": "string",
+          "enum": ["passed", "failed", "not_applicable"],
+          "description": "AgentGraph security gate state — the AND-composition of the three published AgentGraph gates (static_analysis, secret_scan, dependency_audit). 'passed' means all three sub-gates clean; 'failed' means at least one sub-gate failed; 'not_applicable' means vector does not test the security dimension. Sub-gate diagnosis lives inside inputs.agentgraph_scan.gates so consumers know exactly which dimension failed."
+        },
         "composite_decision": {
           "type": "string",
           "enum": ["permit", "deny", "conditional_allow", "provisional_allow", "refer"],
@@ -209,7 +321,7 @@
           "description": "Array of gate names that failed (or returned a non-passing state). Empty array when composite_decision is 'permit'. Non-empty when composite_decision is 'deny' / 'conditional_allow' / 'provisional_allow' / 'refer'. This is the structural encoding of per-gate failure reporting — a verifier that produces the right composite for the wrong reason fails the vector.",
           "items": {
             "type": "string",
-            "enum": ["identity_gate", "delegation_gate", "wallet_state_gate", "revocation_gate", "policy_gate", "key_lifecycle_gate"]
+            "enum": ["identity_gate", "delegation_gate", "wallet_state_gate", "revocation_gate", "policy_gate", "key_lifecycle_gate", "security_gate"]
           },
           "uniqueItems": true
         },
@@ -219,7 +331,7 @@
         },
         "decisive_gate": {
           "type": "string",
-          "enum": ["identity", "delegation", "wallet_state", "revocation", "policy", "key_lifecycle", "all_passed"],
+          "enum": ["identity", "delegation", "wallet_state", "revocation", "policy", "key_lifecycle", "security", "all_passed"],
           "description": "Which gate was the deciding factor in the composite decision. Convenience field — derivable from failing_gates but useful for human readers."
         }
       }

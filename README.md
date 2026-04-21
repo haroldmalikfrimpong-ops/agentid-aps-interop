@@ -8,8 +8,9 @@ Verify the complete audit chain:
 1. **Identity** (AgentID) — "Who is this agent?"
 2. **Authorization** (APS) — "What may this agent do?"
 3. **Receipt** (APS) — "What did it actually do?"
+4. **Security posture** (AgentGraph) — "Is the agent's code safe to run?"
 
-Two independent implementations, one shared fixture set, deterministic pass/fail.
+Independent implementations, one shared fixture set, deterministic pass/fail.
 
 ## Structure
 
@@ -31,7 +32,12 @@ fixtures/
       happy-path-both-valid.json    # Identity + delegation both pass → permit
       agentid-valid-aps-revoked.json # Identity passes, delegation revoked → deny
       aps-valid-agentid-stale.json  # Delegation valid, identity stale → conditional
-  composed/                         # (planned) Multi-attestation envelopes carrying both
+  agentgraph/                       # AgentGraph security-scan fixtures (contributed by @kenneives)
+    v1/
+      happy-path.json               # All three security gates pass → permit
+      critical-deps-fail.json       # dependency_audit fails (2 critical CVEs) → deny
+      secret-leaked.json            # secret_scan fails (committed API key) → deny
+  composed/                         # (planned) Multi-attestation envelopes carrying two or three signals
     v1/
   cross-chain/
     identity-to-receipt.json        # Full chain test (pre-v1)
@@ -85,6 +91,7 @@ Implementors run their verification path against the fixtures and report pass/fa
 
 - **AgentID** ([@haroldmalikfrimpong-ops](https://github.com/haroldmalikfrimpong-ops)) — Identity verification fixtures
 - **APS** ([@aeoess](https://github.com/aeoess)) — Authorization + governance receipt fixtures
+- **AgentGraph** ([@kenneives](https://github.com/kenneives)) — Security-scan fixtures (third signal)
 
 ## Context
 
