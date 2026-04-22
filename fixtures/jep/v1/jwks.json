@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "kid": "did:web:getagentid.dev:agent:agent_interop_test_001#jep-v1",
+      "alg": "EdDSA",
+      "use": "sig",
+      "x": "IHoGeJKCHiXXcPH7oMR8Ef9LgT5UFi7Onrg54HYjGrY"
+    }
+  ]
+}
