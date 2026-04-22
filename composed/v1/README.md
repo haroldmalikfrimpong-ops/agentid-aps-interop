@@ -168,3 +168,22 @@ v2 slot versions will be:
   1.1.0 (PR #6).
 - **aeoess** — APS slot shape, APS v1 fixtures, composed-v1 envelope contract + fixtures,
   `verify.py`, this README, schema amendment 1.1.0 → 1.2.0 (APS v1-structural shape).
+
+## JEP slot
+
+`slots.jep` carries a JEP receipt as a `decision_event` signal.
+
+Unlike AgentID, APS, and AgentGraph, JEP is not part of the naive all-must-pass composite. A JEP receipt is a signed judgment / decision-event record, not a policy-engine output and not a fourth pass/fail gate.
+
+For composed-v1, the validator checks:
+
+- shared `subject_did` binding;
+- `version: "jep-v1"`;
+- `category: "decision_event"`;
+- JCS canonicalizability;
+- `aud` binding between `slots.jep.aud` and the inner JEP `payload.aud`;
+- `payload_hash` recomputation where present;
+- `payload.ref` linkage to `references[]` with `kind: "prior_event"`;
+- referenced artifact hash integrity when `artifact_path` is present.
+
+The JEP slot is then skipped from the composite decision so the existing AgentID + APS + AgentGraph gate semantics remain unchanged.

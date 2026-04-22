@@ -1,0 +1,9 @@
+{
+  "judgment_event_hash": "sha256:3aac0eafee9abc1f414a4139af4d6ca56967d64c3a34678073eb69db0fd7d072",
+  "verification_event_hash": "sha256:a8236f529e77442f4aedbbc3856c96e33dcf6ecac82723bbcfba93f5fe720ed9",
+  "decision_content_hash": "sha256:94fa4e6ff6e9230ec5a0c53ab86a8dc211919ce3a05d9216ca1bcd92d034d47d",
+  "verification_content_hash": "sha256:ba70565a39a00b39feaee59199a86804a893c189af340fd620a7a87818094eba",
+  "aud": "did:web:agentgraph.co#gateway-reverify",
+  "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "kid": "did:web:getagentid.dev:agent:agent_interop_test_001#jep-v1"
+}

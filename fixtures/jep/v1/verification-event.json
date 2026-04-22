@@ -1,0 +1,11 @@
+{
+  "jep": "1",
+  "verb": "V",
+  "who": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "when": 1776816060,
+  "what": "sha256:ba70565a39a00b39feaee59199a86804a893c189af340fd620a7a87818094eba",
+  "nonce": "a61e7fc6-0c51-4ab2-9d6f-1f99e7640002",
+  "aud": "did:web:agentgraph.co#gateway-reverify",
+  "ref": "sha256:3aac0eafee9abc1f414a4139af4d6ca56967d64c3a34678073eb69db0fd7d072",
+  "sig": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6Z2V0YWdlbnRpZC5kZXY6YWdlbnQ6YWdlbnRfaW50ZXJvcF90ZXN0XzAwMSNqZXAtdjEiLCJ0eXAiOiJKRVAifQ.eyJhdWQiOiJkaWQ6d2ViOmFnZW50Z3JhcGguY28jZ2F0ZXdheS1yZXZlcmlmeSIsImplcCI6IjEiLCJub25jZSI6ImE2MWU3ZmM2LTBjNTEtNGFiMi05ZDZmLTFmOTllNzY0MDAwMiIsInJlZiI6InNoYTI1NjozYWFjMGVhZmVlOWFiYzFmNDE0YTQxMzlhZjRkNmNhNTY5NjdkNjRjM2EzNDY3ODA3M2ViNjlkYjBmZDdkMDcyIiwidmVyYiI6IlYiLCJ3aGF0Ijoic2hhMjU2OmJhNzA1NjVhMzlhMDBiMzlmZWFlZTU5MTk5YTg2ODA0YTg5M2MxODlhZjM0MGZkNjIwYTdhODc4MTgwOTRlYmEiLCJ3aGVuIjoxNzc2ODE2MDYwLCJ3aG8iOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEifQ.L_Ys2YhENd3OZ9ERApSvSDzFHMOQj4OClEH17Is1k-NiGvUiauDV3yFOKSddHU6uet4lPgbRwxJL2NevSewxAw"
+}
