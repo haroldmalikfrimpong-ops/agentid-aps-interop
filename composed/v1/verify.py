@@ -131,16 +131,13 @@ def _slot_passes(slot: Dict[str, Any], slot_name: str) -> bool:
 
 
     if slot_name == "hive":
-        # Hive tier gate: tier must be a known tier (not VOID), key active,
-        # non_transferable must be True, and hit_rate >= 0.8
         tier = slot.get("agent_tier", "VOID")
         non_transferable = slot.get("non_transferable", False)
         hit_rate = slot.get("hit_rate", 0.0)
         known_tiers = {"MOZ", "HAWX", "EMBR", "SOLX", "FENR"}
         return tier in known_tiers and non_transferable is True and hit_rate >= 0.8
 
-        raise ValueError(f"unknown slot name: {slot_name}")
-raise ValueError(f"unknown gating slot name: {slot_name}")
+    raise ValueError(f"unknown gating slot name: {slot_name}")
 
 
 def _recompute_delegation_chain_root(chain: List[Dict[str, Any]]) -> str:
@@ -237,19 +234,13 @@ def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
 
     slots = envelope.get("slots", {})
 
-
-        # Check 2: core slots always required; hive slot only required in hive-specific fixtures
+    # Check 2: core gating slots required; hive only when fixture is hive-specific
     for slot_name in ("agentid", "aps", "agentgraph"):
-# Existing composed-v1 contract: the three gating slots are required.
-    for slot_name in GATING_SLOTS:
         rows.append((f"slots.{slot_name} present", slot_name in slots))
     if "hive" in path.name:
         rows.append(("slots.hive present", "hive" in slots))
 
-
     # Check 3: subject_did consistency
-    for slot_name in ("agentid", "aps", "agentgraph", "hive"):
-# Optional JEP decision_event slot is checked when present.
     for slot_name in CHECKED_SLOTS:
         if slot_name not in slots:
             continue
@@ -274,8 +265,7 @@ def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
 
 
     # Check 6: JCS-canonicalize each slot
-    for slot_name in ("agentid", "aps", "agentgraph", "hive"):
-for slot_name in CHECKED_SLOTS:
+    for slot_name in CHECKED_SLOTS:
         if slot_name not in slots:
             continue
         try:
@@ -285,12 +275,11 @@ for slot_name in CHECKED_SLOTS:
             rows.append((f"slots.{slot_name} JCS-canonicalizes", False))
 
 
-    # Check 7: naive composite rule agreement
-    passes = {s: _slot_passes(slots[s], s) for s in ("agentid", "aps", "agentgraph", "hive") if s in slots}
-if "jep" in slots:
+    # Check 7: JEP slot (decision_event — does not gate composite)
+    if "jep" in slots:
         rows.extend(_check_jep_slot(slots["jep"], env_subject, repo_root))
 
-    # Naive composite still gates only AgentID + APS + AgentGraph.
+    # Naive composite gates on AgentID + APS + AgentGraph + Hive (not JEP).
     passes = {s: _slot_passes(slots[s], s) for s in GATING_SLOTS if s in slots}
     all_pass = all(passes.values())
     expected_decision = envelope.get("expected_composite", {}).get("decision")
