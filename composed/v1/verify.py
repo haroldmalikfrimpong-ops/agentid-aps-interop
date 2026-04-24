@@ -63,6 +63,7 @@ SLOT_EXPECTED_VERSIONS = {
     "agentid": {"agentid-identity-v1-structural", "1.0.0", "1.0.1", "1.1.0", "1.2.0"},
     "hive": {"hive-tier-v1"},
     "jep": {"jep-v1"},
+    "concordia": {"concordia-envelope-v1-structural"},
 }
 
 
@@ -217,6 +218,57 @@ def _check_jep_slot(slot: Dict[str, Any], env_subject: Optional[str], repo_root:
     return rows
 
 
+def _concordia_required_fields_present(payload: Dict[str, Any]) -> bool:
+    """Check that a Concordia CTEF envelope has the required top-level fields."""
+    required = {
+        "envelope_version",
+        "envelope_id",
+        "issued_at",
+        "expires_at",
+        "validity_temporal",
+        "provider",
+        "subject",
+        "category",
+        "visibility",
+        "references",
+        "payload",
+        "signature",
+        "canonicalization_spec",
+    }
+    return required.issubset(payload.keys())
+
+
+def _check_concordia_slot(slot: Dict[str, Any], env_subject: Optional[str]) -> List[Tuple[str, bool]]:
+    rows: List[Tuple[str, bool]] = []
+
+    rows.append(("slots.concordia.category == 'transactional'", slot.get("category") == "transactional"))
+    rows.append(("slots.concordia skipped from naive all-must-pass composite", True))
+    rows.append(("slots.concordia.subject_did == envelope subject_did", slot.get("subject_did") == env_subject))
+
+    payload = slot.get("payload")
+    if not isinstance(payload, dict):
+        rows.append(("slots.concordia.payload is object", False))
+        return rows
+    rows.append(("slots.concordia.payload is object", True))
+
+    rows.append(("slots.concordia.payload has required CTEF fields", _concordia_required_fields_present(payload)))
+    rows.append(("slots.concordia.payload.envelope_version == '1.0.0'", payload.get("envelope_version") == "1.0.0"))
+    rows.append(("slots.concordia.payload.canonicalization_spec == 'jcs-rfc8785+sha256'", payload.get("canonicalization_spec") == "jcs-rfc8785+sha256"))
+    rows.append(("slots.concordia.payload.subject.did == envelope subject_did", payload.get("subject", {}).get("did") == env_subject))
+
+    try:
+        _canonicalize(payload)
+        rows.append(("slots.concordia.payload JCS-canonicalizes", True))
+    except Exception:
+        rows.append(("slots.concordia.payload JCS-canonicalizes", False))
+
+    declared_payload_hash = slot.get("payload_hash")
+    if declared_payload_hash:
+        rows.append(("slots.concordia.payload_hash matches JCS+SHA256 recompute", declared_payload_hash == _sha256_jcs(payload)))
+
+    return rows
+
+
 def _recompute_delegation_chain_root(chain):
     canonical = jcs.canonicalize(chain)
     return "sha256:" + hashlib.sha256(canonical).hexdigest()
@@ -281,6 +333,9 @@ def verify_envelope(path):
     repo_root = Path(__file__).resolve().parents[2]
     if "jep" in slots:
         rows.extend(_check_jep_slot(slots["jep"], env_subject, repo_root))
+
+    if "concordia" in slots:
+        rows.extend(_check_concordia_slot(slots["concordia"], env_subject))
 
     # Check 7: naive composite rule agreement
     passes = {s: _slot_passes(slots[s], s) for s in ("agentid", "aps", "agentgraph", "hive") if s in slots}

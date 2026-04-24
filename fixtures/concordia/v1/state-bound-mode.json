@@ -1,0 +1,84 @@
+{
+  "scenario": "state-bound-mode",
+  "description": "Concordia CTEF v1.0.0 envelope wrapping a mandate with state_bound validity (authorization bounded by a named state condition). Empty signature (v1 structural).",
+  "subject": {
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+  },
+  "inputs": {
+    "concordia_envelope": {
+      "envelope_version": "1.0.0",
+      "envelope_id": "urn:uuid:33333333-3333-4333-8333-333333333333",
+      "issued_at": "2026-04-24T00:00:00Z",
+      "expires_at": "2026-05-01T00:00:00Z",
+      "validity_temporal": {
+        "mode": "state_bound",
+        "state_condition": "budget_remaining"
+      },
+      "provider": {
+        "did": "did:web:concordia.framework:provider:mandate-issuer",
+        "category": "transactional",
+        "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+        "name": "Concordia"
+      },
+      "subject": {
+        "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+      },
+      "category": "transactional",
+      "visibility": "restricted",
+      "references": [
+        {
+          "kind": "source_session",
+          "urn": "urn:concordia:session:state-bound-test-001",
+          "verified_at": "2026-04-24T00:00:00Z"
+        }
+      ],
+      "payload": {
+        "mandate_id": "urn:concordia:mandate:state-bound-001",
+        "issuer": "did:web:concordia.framework:provider:mandate-issuer",
+        "subject": "did:web:getagentid.dev:agent:agent_interop_test_001",
+        "issued_at": "2026-04-24T00:00:00Z",
+        "validity": {
+          "mode": "state_bound",
+          "state_condition": "budget_remaining"
+        },
+        "constraints": {
+          "max_spend": {
+            "amount": 1000,
+            "currency": "USD"
+          },
+          "temporal_budget": {
+            "max_sessions": 10,
+            "max_concurrent": 2
+          }
+        },
+        "algorithm": "EdDSA",
+        "signature": ""
+      },
+      "signature": {
+        "alg": "EdDSA",
+        "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+        "value": ""
+      },
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    }
+  },
+  "expected_result": {
+    "mandate_gate": "pass",
+    "validity_temporal_gate": "pass",
+    "subject_binding_gate": "pass",
+    "canonicalization_gate": "pass",
+    "composite_decision": "permit",
+    "failing_gates": [],
+    "reasoning": "Mandate well-formed, validity_temporal.mode 'state_bound' with state_condition, temporal_budget limits, subject binds, JCS canonicalizable. Structural permit."
+  },
+  "metadata": {
+    "signature_alg": "EdDSA",
+    "canonicalization": "JCS (RFC 8785)",
+    "schema_version": "1.1.0",
+    "fixture_form": "structural",
+    "contributors": [
+      "eriknewton"
+    ]
+  }
+}

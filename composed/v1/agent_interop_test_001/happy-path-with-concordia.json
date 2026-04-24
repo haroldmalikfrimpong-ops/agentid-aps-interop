@@ -1,0 +1,182 @@
+{
+  "composition_version": "composed-v1",
+  "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+  "issued_at": "2026-04-21T21:00:00Z",
+  "slots": {
+    "agentid": {
+      "agent_id": "agent_interop_test_001",
+      "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "trust_level": 2,
+      "trust_level_label": "L2 \u2014 Verified",
+      "certificate_valid": true,
+      "active": true,
+      "ed25519_bound": true,
+      "wallet_bound": false,
+      "solana_address": "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR",
+      "wallet_address": null,
+      "wallet_chain": null,
+      "bound_addresses": [
+        "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR"
+      ],
+      "subject_binding": "wallet_bound",
+      "issued_at": "2026-04-10T00:00:00Z",
+      "expires_at": "2027-04-10T00:00:00Z",
+      "key_status": "active",
+      "compromised_since": null,
+      "revoked_at": null,
+      "revocation_reason": null,
+      "version": "1.1.0"
+    },
+    "aps": {
+      "version": "aps-v2-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:gateway.aeoess.com",
+      "delegation_chain": [
+        {
+          "hop": 0,
+          "delegator_did": "did:aps:z6MkHumanPrincipalInteropTest001",
+          "delegate_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "scope": [
+            "action:read",
+            "resource:documents"
+          ],
+          "not_before": "2026-04-21T00:00:00Z",
+          "not_after": "2026-07-21T00:00:00Z"
+        }
+      ],
+      "delegation_chain_root": "sha256:bca02d6c90a22d6beb1edc494358943ef70b42d75c2a94e0c4b76e77bcf8a846",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    },
+    "agentgraph": {
+      "version": "agentgraph-scan-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:agentgraph.co",
+      "scan_target": {
+        "url": "https://github.com/agentgraph-co/interop-test-agent",
+        "type": "repo",
+        "artifact_ref": "git:sha256:6c0f4fdeaa2f8b6ce0c3f0f5e8a4a9f1c7e6d5b8",
+        "fetched_at": "2026-04-15T12:00:00Z"
+      },
+      "scanner": {
+        "name": "agentgraph-trust-scanner",
+        "version": "2026.04.1"
+      },
+      "scanned_at": "2026-04-15T12:00:00Z",
+      "gates": {
+        "static_analysis": {
+          "grade": "A",
+          "score": 0.9,
+          "issue_count": 0
+        },
+        "secret_scan": {
+          "grade": "A+",
+          "score": 1.0,
+          "issue_count": 0
+        },
+        "dependency_audit": {
+          "grade": "A",
+          "score": 0.85,
+          "critical": 0,
+          "high": 0
+        }
+      },
+      "overall_grade": "A",
+      "evidence_url": "https://agentgraph.co/api/v1/entities/agent_interop_test_001/attestation/composed-slot",
+      "evidence_hash": "sha256:129c1949896a126ad612d82b8bc50777ce2a712690b3c36d4f50670c8092c8eb",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    },
+    "concordia": {
+      "version": "concordia-envelope-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:concordia.framework:provider:mandate-issuer",
+      "category": "transactional",
+      "validity_temporal": "windowed",
+      "canonicalization_spec": "jcs-rfc8785+sha256",
+      "payload_hash": "sha256:2596bc7f9b7a0caeaf2ea940dcb1136dab273f9764e7eb2e079bc99ae3d83723",
+      "payload": {
+        "envelope_version": "1.0.0",
+        "envelope_id": "urn:uuid:22222222-2222-4222-8222-222222222222",
+        "issued_at": "2026-04-24T00:00:00Z",
+        "expires_at": "2026-05-01T00:00:00Z",
+        "validity_temporal": {
+          "mode": "windowed",
+          "not_before": "2026-04-01T00:00:00Z",
+          "not_after": "2026-06-30T23:59:59Z"
+        },
+        "provider": {
+          "did": "did:web:concordia.framework:provider:mandate-issuer",
+          "category": "transactional",
+          "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+          "name": "Concordia"
+        },
+        "subject": {
+          "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+        },
+        "category": "transactional",
+        "visibility": "restricted",
+        "references": [
+          {
+            "kind": "source_session",
+            "urn": "urn:concordia:session:windowed-test-001",
+            "verified_at": "2026-04-24T00:00:00Z"
+          }
+        ],
+        "payload": {
+          "mandate_id": "urn:concordia:mandate:windowed-001",
+          "issuer": "did:web:concordia.framework:provider:mandate-issuer",
+          "subject": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "issued_at": "2026-04-24T00:00:00Z",
+          "validity": {
+            "mode": "windowed",
+            "not_before": "2026-04-01T00:00:00Z",
+            "not_after": "2026-06-30T23:59:59Z"
+          },
+          "constraints": {
+            "max_spend": {
+              "amount": 5000,
+              "currency": "USD"
+            },
+            "allowed_categories": [
+              "office-supplies",
+              "cloud-services"
+            ]
+          },
+          "algorithm": "EdDSA",
+          "signature": ""
+        },
+        "signature": {
+          "alg": "EdDSA",
+          "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+          "value": ""
+        },
+        "canonicalization_spec": "jcs-rfc8785+sha256"
+      },
+      "references": [
+        {
+          "kind": "source_session",
+          "urn": "urn:concordia:session:windowed-test-001",
+          "artifact_path": "fixtures/concordia/v1/windowed-mode.json",
+          "verified_at": "2026-04-24T00:01:00Z"
+        }
+      ]
+    }
+  },
+  "expected_composite": {
+    "decision": "permit",
+    "decisive_signal": "all_passed",
+    "failing_slots": [],
+    "reasoning": "AgentID, APS, and AgentGraph all pass. Concordia is carried as a transactional slot (CTEF v1.0.0 envelope wrapping a mandate) and is checked for subject binding, envelope_version, JCS canonicalizability, and payload_hash recompute, but is skipped from the naive all-must-pass composite because it is referenceable transaction evidence, not a pass/fail gate."
+  },
+  "metadata": {
+    "contributors": [
+      "eriknewton"
+    ],
+    "fixture_form": "structural+concordia-envelope",
+    "source_fixtures": {
+      "agentid": "fixtures/agentid/v1/happy-path.json",
+      "aps": "fixtures/aps/v1/happy-path.json",
+      "agentgraph": "fixtures/agentgraph/v1/happy-path.json",
+      "concordia": "fixtures/concordia/v1/windowed-mode.json"
+    }
+  }
+}
