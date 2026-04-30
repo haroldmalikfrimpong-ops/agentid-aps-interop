@@ -1,0 +1,114 @@
+{
+  "scenario": "delegation-chain",
+  "description": "Concordia CTEF v1.0.0 envelope wrapping a mandate with 2-hop delegation chain (human principal to procurement officer to agent) with monotonic scope narrowing. Empty signature (v1 structural).",
+  "subject": {
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+  },
+  "inputs": {
+    "concordia_envelope": {
+      "envelope_version": "1.0.0",
+      "envelope_id": "urn:uuid:44444444-4444-4444-8444-444444444444",
+      "issued_at": "2026-04-24T00:00:00Z",
+      "expires_at": "2026-05-01T00:00:00Z",
+      "validity_temporal": {
+        "mode": "sequence",
+        "sequence_key": "urn:concordia:session:delegation-test-001"
+      },
+      "provider": {
+        "did": "did:web:concordia.framework:provider:mandate-issuer",
+        "category": "transactional",
+        "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+        "name": "Concordia"
+      },
+      "subject": {
+        "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+      },
+      "category": "transactional",
+      "visibility": "restricted",
+      "references": [
+        {
+          "kind": "source_session",
+          "urn": "urn:concordia:session:delegation-test-001",
+          "verified_at": "2026-04-24T00:00:00Z"
+        }
+      ],
+      "payload": {
+        "mandate_id": "urn:concordia:mandate:delegation-001",
+        "issuer": "did:web:concordia.framework:provider:mandate-issuer",
+        "subject": "did:web:getagentid.dev:agent:agent_interop_test_001",
+        "issued_at": "2026-04-24T00:00:00Z",
+        "validity": {
+          "mode": "sequence",
+          "sequence_key": "urn:concordia:session:delegation-test-001"
+        },
+        "constraints": {
+          "max_spend": {
+            "amount": 500,
+            "currency": "USD"
+          },
+          "allowed_categories": [
+            "office-supplies"
+          ]
+        },
+        "algorithm": "EdDSA",
+        "signature": "",
+        "delegation_chain": [
+          {
+            "hop": 0,
+            "delegator": "did:web:procurement.example.com:principal:alice",
+            "delegate": "did:web:procurement.example.com:agent:bob",
+            "delegated_at": "2026-04-24T00:00:00Z",
+            "scope_restriction": {
+              "max_spend": {
+                "amount": 10000,
+                "currency": "USD"
+              }
+            },
+            "signature": ""
+          },
+          {
+            "hop": 1,
+            "delegator": "did:web:procurement.example.com:agent:bob",
+            "delegate": "did:web:getagentid.dev:agent:agent_interop_test_001",
+            "delegated_at": "2026-04-24T00:30:00Z",
+            "scope_restriction": {
+              "max_spend": {
+                "amount": 500,
+                "currency": "USD"
+              },
+              "allowed_categories": [
+                "office-supplies"
+              ]
+            },
+            "signature": ""
+          }
+        ]
+      },
+      "signature": {
+        "alg": "EdDSA",
+        "kid": "did:web:concordia.framework:provider:mandate-issuer#v1",
+        "value": ""
+      },
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    }
+  },
+  "expected_result": {
+    "mandate_gate": "pass",
+    "validity_temporal_gate": "pass",
+    "subject_binding_gate": "pass",
+    "canonicalization_gate": "pass",
+    "composite_decision": "permit",
+    "failing_gates": [],
+    "reasoning": "Mandate well-formed with delegation_chain, child-hop scope is a subset of parent-hop scope (monotonic narrowing), subject binds to final delegate, JCS canonicalizable. Structural permit."
+  },
+  "metadata": {
+    "signature_alg": "EdDSA",
+    "canonicalization": "JCS (RFC 8785)",
+    "schema_version": "1.1.0",
+    "fixture_form": "structural",
+    "contributors": [
+      "eriknewton"
+    ]
+  }
+}

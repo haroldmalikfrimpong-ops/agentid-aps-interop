@@ -263,12 +263,121 @@
               "const": "jcs-rfc8785+sha256"
             }
           }
+        },
+        "concordia_envelope": {
+          "type": "object",
+          "description": "Concordia Trust Evidence Format (CTEF) v1.0.0 envelope wrapping a Concordia mandate. Three validity modes (sequence, windowed, state_bound) and optional delegation chain inside payload. v1 fixtures ship structural-only with empty signature.value; v2 will add EdDSA signatures in lockstep with AgentID, APS, and AgentGraph signature batch.",
+          "required": [
+            "envelope_version",
+            "envelope_id",
+            "issued_at",
+            "expires_at",
+            "validity_temporal",
+            "provider",
+            "subject",
+            "category",
+            "visibility",
+            "references",
+            "payload",
+            "signature",
+            "canonicalization_spec"
+          ],
+          "properties": {
+            "envelope_version": { "type": "string", "const": "1.0.0" },
+            "envelope_id": {
+              "type": "string",
+              "pattern": "^urn:uuid:[0-9a-f\\-]{36}$"
+            },
+            "issued_at": { "type": "string", "format": "date-time" },
+            "expires_at": { "type": "string", "format": "date-time" },
+            "validity_temporal": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": ["mode", "sequence_key"],
+                  "properties": {
+                    "mode": { "const": "sequence" },
+                    "sequence_key": { "type": "string" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["mode", "not_before", "not_after"],
+                  "properties": {
+                    "mode": { "const": "windowed" },
+                    "not_before": { "type": "string", "format": "date-time" },
+                    "not_after": { "type": "string", "format": "date-time" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["mode", "state_condition"],
+                  "properties": {
+                    "mode": { "const": "state_bound" },
+                    "state_condition": { "type": "string" }
+                  }
+                }
+              ]
+            },
+            "provider": {
+              "type": "object",
+              "required": ["did", "category"],
+              "properties": {
+                "did": { "type": "string" },
+                "category": { "const": "transactional" },
+                "kid": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            },
+            "subject": {
+              "type": "object",
+              "required": ["did"],
+              "properties": {
+                "did": { "type": "string" }
+              }
+            },
+            "category": { "type": "string", "const": "transactional" },
+            "visibility": {
+              "type": "string",
+              "enum": ["public", "restricted", "private"]
+            },
+            "references": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string" },
+                  "urn": { "type": "string" },
+                  "verified_at": { "type": "string", "format": "date-time" },
+                  "verifier_did": { "type": "string" },
+                  "hash": { "type": "string" }
+                }
+              }
+            },
+            "payload": {
+              "type": "object",
+              "description": "Mandate object or mapped attestation payload. Structural-shape only at v1."
+            },
+            "signature": {
+              "type": "object",
+              "properties": {
+                "alg": { "enum": ["EdDSA", "ES256"] },
+                "kid": { "type": "string" },
+                "value": { "type": "string" }
+              }
+            },
+            "canonicalization_spec": {
+              "type": "string",
+              "const": "jcs-rfc8785+sha256"
+            }
+          }
         }
       },
       "anyOf": [
         { "required": ["agentid_attestation"] },
         { "required": ["aps_delegation"] },
-        { "required": ["agentgraph_scan"] }
+        { "required": ["agentgraph_scan"] },
+        { "required": ["concordia_envelope"] }
       ]
     },
     "signed_form": {

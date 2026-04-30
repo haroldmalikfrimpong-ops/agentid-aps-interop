@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-composed/v1/verify.py — cross-issuer validator for composed-v1 envelopes.
+composed/v1/verify.py — cross-issuer validator for composed-v1 three-signal envelopes.
 
-This validator is issuer-neutral. It checks the existing AgentID + APS +
-AgentGraph all-must-pass composite, and also recognizes an optional JEP slot.
-
+This validator is issuer-neutral. It has no dependency on the agent-passport-system SDK,
+the AgentID SDK, or the AgentGraph scanner. A third-party verifier (MolTrust, Verascore, a
+research group) should be able to run it against their own composed envelopes without
+pulling any issuer-specific library.
 
 Per-envelope checks:
   1. subject_did at envelope root matches the DID carried in each slot.
@@ -28,19 +29,13 @@ Per-envelope checks:
 Runtime:
   Python 3.10+ recommended (this script uses only 3.9-compatible syntax so it also runs on
   older interpreters that CI might provision).
-JEP rule for composed-v1:
-- `slots.jep` is checked as `category: decision_event` evidence.
-- It is NOT included in the naive all-must-pass composite.
-- The verifier still checks subject binding, JCS canonicalizability, aud binding,
-  payload hash, and prior-event reference integrity where `payload.ref` is set.
 
 Dependencies:
-    pip install jcs
+  pip install jcs
 
 Exit code:
-    0 all fixtures pass all checks
-    1 any fixture fails any check
-    2 setup/dependency error
+  0 all fixtures pass all checks
+  1 any fixture fails any check
 """
 
 from __future__ import annotations
@@ -57,34 +52,26 @@ except ImportError:
     sys.stderr.write("ERROR: jcs not installed. Run: pip install jcs\n")
     sys.exit(2)
 
+
 GATING_SLOTS = ("agentid", "aps", "agentgraph", "hive")
-CHECKED_SLOTS = ("agentid", "aps", "agentgraph", "jep", "hive")
+CHECKED_SLOTS = ("agentid", "aps", "agentgraph", "jep", "hive", "concordia")
 
 SLOT_EXPECTED_VERSIONS = {
     "agentgraph": {"agentgraph-scan-v1-structural"},
     "aps": {"aps-v2-structural"},
     # AgentID: declared slot version on #5 is agentid-identity-v1-structural.
-    # Shipped v1 fixtures use semver because they predate the slot-version convention.
+    # Shipped v1 fixtures in fixtures/agentid/v1/ use semver (e.g. "1.1.0") because they
+    # predate the slot-version convention Harold proposed on #5. Accept both until the
+    # AgentID v1 fixtures are reshaped to carry the slot version string.
     "agentid": {"agentid-identity-v1-structural", "1.0.0", "1.0.1", "1.1.0", "1.2.0"},
-
     "hive": {"hive-tier-v1"},
     "jep": {"jep-v1"},
+    "concordia": {"concordia-envelope-v1-structural"},
 }
 
 
-def _canonicalize(obj: Any) -> bytes:
-    return jcs.canonicalize(obj)
-
-
-def _sha256_jcs(obj: Any) -> str:
-    return "sha256:" + hashlib.sha256(_canonicalize(obj)).hexdigest()
-
-
-def _slot_subject_did(slot: Dict[str, Any], slot_name: str) -> str:
-    """Return the DID this slot claims as its subject.
-
-    AgentID currently uses `did`; other slots use `subject_did`.
-    """
+def _slot_subject_did(slot, slot_name):
+    """Return the DID this slot claims as its subject. AgentID uses 'did', others use 'subject_did'."""
     if "subject_did" in slot:
         return slot["subject_did"]
     if slot_name == "agentid" and "did" in slot:
@@ -92,11 +79,17 @@ def _slot_subject_did(slot: Dict[str, Any], slot_name: str) -> str:
     raise ValueError(f"slot '{slot_name}' has no subject_did or did field")
 
 
-def _slot_passes(slot: Dict[str, Any], slot_name: str) -> bool:
-    """Return whether a gating slot passes in its native frame.
+def _slot_passes(slot, slot_name):
+    """
+    Decide whether a slot is 'passing' in its native frame, without reaching into the source
+    fixture's expected_result block. This lets verify.py be used on any composed envelope,
+    not just ours. Rule per slot:
 
-    JEP is intentionally not handled here; it is a decision_event record, not a
-    pass/fail gate for the naive composite.
+      agentid: key_status == 'active' AND certificate_valid == True AND revoked_at is null
+      aps:     every hop in delegation_chain lacks revoked_at, AND each hop's scope is a
+               subset of its parent hop's scope (monotonic narrowing)
+      agentgraph: every one of the three published gates has grade != 'F' AND for
+               dependency_audit, critical == 0
     """
     if slot_name == "agentid":
         key_status = slot.get("key_status", "active")
@@ -108,8 +101,10 @@ def _slot_passes(slot: Dict[str, Any], slot_name: str) -> bool:
         chain = slot.get("delegation_chain", [])
         if not chain:
             return False
+        # any ancestor hop with revoked_at fails the whole chain
         if any(h.get("revoked_at") for h in chain):
             return False
+        # monotonic narrowing: each hop's scope is a subset of parent's scope
         for i in range(1, len(chain)):
             parent_scope = set(chain[i - 1].get("scope", []))
             child_scope = set(chain[i].get("scope", []))
@@ -129,7 +124,6 @@ def _slot_passes(slot: Dict[str, Any], slot_name: str) -> bool:
             return False
         return True
 
-
     if slot_name == "hive":
         tier = slot.get("agent_tier", "VOID")
         non_transferable = slot.get("non_transferable", False)
@@ -140,8 +134,12 @@ def _slot_passes(slot: Dict[str, Any], slot_name: str) -> bool:
     raise ValueError(f"unknown gating slot name: {slot_name}")
 
 
-def _recompute_delegation_chain_root(chain: List[Dict[str, Any]]) -> str:
-    return _sha256_jcs(chain)
+def _canonicalize(obj: Any) -> bytes:
+    return jcs.canonicalize(obj)
+
+
+def _sha256_jcs(obj: Any) -> str:
+    return "sha256:" + hashlib.sha256(_canonicalize(obj)).hexdigest()
 
 
 def _jep_required_fields_present(payload: Dict[str, Any]) -> bool:
@@ -221,13 +219,71 @@ def _check_jep_slot(slot: Dict[str, Any], env_subject: Optional[str], repo_root:
     return rows
 
 
-def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
-    rows: List[Tuple[str, bool]] = []
-    envelope = json.load(open(path, encoding="utf-8"))
-    name = path.name
-    repo_root = Path(__file__).resolve().parents[2]
+def _concordia_required_fields_present(payload: Dict[str, Any]) -> bool:
+    """Check that a Concordia CTEF envelope has the required top-level fields."""
+    required = {
+        "envelope_version",
+        "envelope_id",
+        "issued_at",
+        "expires_at",
+        "validity_temporal",
+        "provider",
+        "subject",
+        "category",
+        "visibility",
+        "references",
+        "payload",
+        "signature",
+        "canonicalization_spec",
+    }
+    return required.issubset(payload.keys())
 
-    rows.append(("composition_version=='composed-v1'", envelope.get("composition_version") == "composed-v1"))
+
+def _check_concordia_slot(slot: Dict[str, Any], env_subject: Optional[str]) -> List[Tuple[str, bool]]:
+    rows: List[Tuple[str, bool]] = []
+
+    rows.append(("slots.concordia.category == 'transactional'", slot.get("category") == "transactional"))
+    rows.append(("slots.concordia skipped from naive all-must-pass composite", True))
+    rows.append(("slots.concordia.subject_did == envelope subject_did", slot.get("subject_did") == env_subject))
+
+    payload = slot.get("payload")
+    if not isinstance(payload, dict):
+        rows.append(("slots.concordia.payload is object", False))
+        return rows
+    rows.append(("slots.concordia.payload is object", True))
+
+    rows.append(("slots.concordia.payload has required CTEF fields", _concordia_required_fields_present(payload)))
+    rows.append(("slots.concordia.payload.envelope_version == '1.0.0'", payload.get("envelope_version") == "1.0.0"))
+    rows.append(("slots.concordia.payload.canonicalization_spec == 'jcs-rfc8785+sha256'", payload.get("canonicalization_spec") == "jcs-rfc8785+sha256"))
+    rows.append(("slots.concordia.payload.subject.did == envelope subject_did", payload.get("subject", {}).get("did") == env_subject))
+
+    try:
+        _canonicalize(payload)
+        rows.append(("slots.concordia.payload JCS-canonicalizes", True))
+    except Exception:
+        rows.append(("slots.concordia.payload JCS-canonicalizes", False))
+
+    declared_payload_hash = slot.get("payload_hash")
+    if declared_payload_hash:
+        rows.append(("slots.concordia.payload_hash matches JCS+SHA256 recompute", declared_payload_hash == _sha256_jcs(payload)))
+
+    return rows
+
+
+def _recompute_delegation_chain_root(chain):
+    canonical = jcs.canonicalize(chain)
+    return "sha256:" + hashlib.sha256(canonical).hexdigest()
+
+
+def verify_envelope(path):
+    rows = []
+    envelope = json.load(open(path))
+
+    name = path.name
+
+    # Check 1: composition_version
+    cv_ok = envelope.get("composition_version") == "composed-v1"
+    rows.append(("composition_version=='composed-v1'", cv_ok))
 
     env_subject = envelope.get("subject_did")
     rows.append(("subject_did present", env_subject is not None))
@@ -247,15 +303,17 @@ def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
         try:
             slot_did = _slot_subject_did(slots[slot_name], slot_name)
             rows.append((f"slots.{slot_name} subject_did == envelope subject_did", slot_did == env_subject))
-        except ValueError:
+        except ValueError as e:
             rows.append((f"slots.{slot_name} subject_did extraction", False))
 
+    # Check 4: version strings
     for slot_name, expected_set in SLOT_EXPECTED_VERSIONS.items():
         if slot_name not in slots:
             continue
-        version = slots[slot_name].get("version")
-        rows.append((f"slots.{slot_name}.version in expected set", version in expected_set))
+        v = slots[slot_name].get("version")
+        rows.append((f"slots.{slot_name}.version in {sorted(expected_set)[:2]}...", v in expected_set))
 
+    # Check 5: APS delegation_chain_root recompute
     aps_slot = slots.get("aps")
     if aps_slot:
         declared = aps_slot.get("delegation_chain_root")
@@ -263,17 +321,22 @@ def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
         recomputed = _recompute_delegation_chain_root(chain)
         rows.append(("aps delegation_chain_root matches JCS+SHA256 recompute", declared == recomputed))
 
-
     # Check 6: JCS-canonicalize each slot
     for slot_name in CHECKED_SLOTS:
         if slot_name not in slots:
             continue
         try:
-            _canonicalize(slots[slot_name])
+            jcs.canonicalize(slots[slot_name])
             rows.append((f"slots.{slot_name} JCS-canonicalizes", True))
-        except Exception:
+        except Exception as e:
             rows.append((f"slots.{slot_name} JCS-canonicalizes", False))
 
+    repo_root = Path(__file__).resolve().parents[2]
+    if "jep" in slots:
+        rows.extend(_check_jep_slot(slots["jep"], env_subject, repo_root))
+
+    if "concordia" in slots:
+        rows.extend(_check_concordia_slot(slots["concordia"], env_subject))
 
     # Check 7: JEP slot (decision_event — does not gate composite)
     if "jep" in slots:
@@ -284,22 +347,19 @@ def verify_envelope(path: Path) -> Tuple[str, List[Tuple[str, bool]]]:
     all_pass = all(passes.values())
     expected_decision = envelope.get("expected_composite", {}).get("decision")
     computed_decision = "permit" if all_pass else "deny"
-    rows.append((
-        f"expected decision '{expected_decision}' matches naive rule '{computed_decision}'",
-        expected_decision == computed_decision,
-    ))
+    rows.append((f"expected decision '{expected_decision}' matches naive rule '{computed_decision}'",
+                 expected_decision == computed_decision))
 
+    # Check 8: failing_slots matches
     declared_failing = set(envelope.get("expected_composite", {}).get("failing_slots", []))
     computed_failing = {s for s, ok in passes.items() if not ok}
-    rows.append((
-        f"failing_slots match (declared {sorted(declared_failing)} vs computed {sorted(computed_failing)})",
-        declared_failing == computed_failing,
-    ))
+    rows.append((f"failing_slots match (declared {sorted(declared_failing)} vs computed {sorted(computed_failing)})",
+                 declared_failing == computed_failing))
 
     return name, rows
 
 
-def main() -> int:
+def main():
     here = Path(__file__).parent
     fixtures_dir = here / "agent_interop_test_001"
     if not fixtures_dir.exists():
@@ -313,33 +373,31 @@ def main() -> int:
 
     total_checks = 0
     total_passed = 0
-    failing_fixtures: List[str] = []
+    failing_fixtures = []
 
-    for path in fixture_paths:
-        name, rows = verify_envelope(path)
+    for p in fixture_paths:
+        name, rows = verify_envelope(p)
         print(f"\n== {name} ==")
         fixture_all_pass = True
         for label, ok in rows:
             total_checks += 1
             if ok:
                 total_passed += 1
-                print(f" PASS {label}")
+                print(f"  PASS  {label}")
             else:
                 fixture_all_pass = False
-                print(f" FAIL {label}")
+                print(f"  FAIL  {label}")
         if not fixture_all_pass:
             failing_fixtures.append(name)
 
-    print("\n== summary ==")
-    print(f" fixtures examined: {len(fixture_paths)}")
-    print(f" checks passed: {total_passed}/{total_checks}")
-    print(f" fixtures clean: {len(fixture_paths) - len(failing_fixtures)}/{len(fixture_paths)}")
-
+    print(f"\n== summary ==")
+    print(f"  fixtures examined: {len(fixture_paths)}")
+    print(f"  checks passed:     {total_passed}/{total_checks}")
+    print(f"  fixtures clean:    {len(fixture_paths) - len(failing_fixtures)}/{len(fixture_paths)}")
     if failing_fixtures:
-        print(f" FAILURES in: {', '.join(failing_fixtures)}")
+        print(f"  FAILURES in:       {', '.join(failing_fixtures)}")
         return 1
-
-    print(" status: OK")
+    print(f"  status:            OK")
     return 0
 
 
