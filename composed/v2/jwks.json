@@ -1,0 +1,16 @@
+{
+  "_comment": "Offline trust anchor for composed/v2. Contains only the AgentAvow key: agentgraph-security-v1 is the product's PRODUCTION public key, copied verbatim from https://agentgraph.co/.well-known/jwks.json. The AgentAvow slot signature in this batch verifies against it. APS and AgentID slots are structural (unsigned) in v2; their keys join this JWKS when each co-issuer signs its own slot.",
+  "_source": "https://agentgraph.co/.well-known/jwks.json",
+  "keys": [
+    {
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "use": "sig",
+      "kid": "agentgraph-security-v1",
+      "x": "JwovTLVbpgk85zlMNruTiLzp85dAucsZWngs8NisBFg",
+      "_signer_key_id": "did:web:agentgraph.co#agentgraph-security-v1",
+      "_provenance": "production key, live at https://agentgraph.co/.well-known/jwks.json"
+    }
+  ]
+}
