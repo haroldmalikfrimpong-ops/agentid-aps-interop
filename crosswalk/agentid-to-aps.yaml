@@ -9,7 +9,7 @@ mappings:
     note: Canonical DID reference
   - agentid: trust_level
     aps: grade
-    note: AgentID L0-L3, APS Grade 0-3
+    note: AgentID L1-L4 (integers 1-4), APS Grade 0-3
   - agentid: ed25519_public_key
     aps: public_key
     note: Both Ed25519, hex or multibase
