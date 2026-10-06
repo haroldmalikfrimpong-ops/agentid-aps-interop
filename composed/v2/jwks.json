@@ -1,6 +1,9 @@
 {
-  "_comment": "Offline trust anchor for composed/v2. Contains only the AgentAvow key: agentgraph-security-v1 is the product's PRODUCTION public key, copied verbatim from https://agentgraph.co/.well-known/jwks.json. The AgentAvow slot signature in this batch verifies against it. APS and AgentID slots are structural (unsigned) in v2; their keys join this JWKS when each co-issuer signs its own slot.",
-  "_source": "https://agentgraph.co/.well-known/jwks.json",
+  "_comment": "Offline trust anchor for composed/v2. Two PRODUCTION public keys, each copied verbatim from its issuer's live JWKS: agentgraph-security-v1 (AgentAvow, https://agentgraph.co/.well-known/jwks.json) and agentid-2026-03 (AgentID, https://getagentid.dev/.well-known/jwks.json). The APS slot is structural (unsigned) in v2; aeoess's key joins this JWKS when the APS slot is signed.",
+  "_source": [
+    "https://agentgraph.co/.well-known/jwks.json",
+    "https://getagentid.dev/.well-known/jwks.json"
+  ],
   "keys": [
     {
       "kty": "OKP",
@@ -11,6 +14,16 @@
       "x": "JwovTLVbpgk85zlMNruTiLzp85dAucsZWngs8NisBFg",
       "_signer_key_id": "did:web:agentgraph.co#agentgraph-security-v1",
       "_provenance": "production key, live at https://agentgraph.co/.well-known/jwks.json"
+    },
+    {
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "use": "sig",
+      "kid": "agentid-2026-03",
+      "x": "xdpmjfq2DX4d6yML7QjaSkYB2h9Dm3phwts5gkAPBp8",
+      "_signer_key_id": "did:web:getagentid.dev#agentid-2026-03",
+      "_provenance": "production key, live at https://getagentid.dev/.well-known/jwks.json (also did:web:getagentid.dev#agentid-2026-03)"
     }
   ]
 }

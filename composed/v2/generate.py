@@ -2,11 +2,12 @@
 """
 composed/v2/generate.py — reproducible generator for the composed-v2 batch.
 
-composed-v2 is the first step of the lockstep signed form of composed-v1.
-"Lockstep" means each issuer signs its OWN slot; this batch lands the AgentAvow
-(formerly AgentGraph) static_analysis slot signed, and leaves the APS and AgentID
-slots structural (unsigned) for aeoess and Harold to sign in their own follow-up
-PRs. Only the AgentAvow slot carries a signature here.
+composed-v2 is the lockstep signed form of composed-v1. "Lockstep" means each
+issuer signs its OWN slot. This batch carries TWO production signatures: the
+AgentAvow (formerly AgentGraph) static_analysis slot (landed in #11) and the
+AgentID identity slot (landed in the AgentID issuer's follow-up, tag
+interop-freeze-2026-10-06). The APS slot stays structural (unsigned) until aeoess
+signs it in the same lockstep.
 
     python3 composed/v2/generate.py        # rewrite fixtures + jwks.json
     python3 composed/v2/generate.py --check # regenerate, diff, verify sig, exit 1 on drift
@@ -29,12 +30,23 @@ AgentAvow slot signature (slots.agentgraph):
   not regenerated. That is the reproducibility contract for a production-signed
   fixture whose key is not on this machine.
 
-APS slot (slots.aps) and AgentID slot (slots.agentid):
-  Structural (unsigned) in v2 — no signature/signer_key_id. Each co-issuer signs
-  its own slot in the coordinated lockstep follow-up. The AgentID slot IS
-  shape-aligned per issue #5 item (b): the v1 fixtures shipped version:"1.1.0" +
-  `did`; v2 emits version:"agentid-identity-v1-structural" + `subject_did` so the
-  slots share one subject vocabulary. Aligning the shape does not require a key.
+AgentID slot signature (slots.agentid):
+  Compact JWS (RFC 7515, EdDSA) produced by the AgentID issuer with the PRODUCTION
+  key `agentid-2026-03` (composed/v2/sign_agentid_slot.py; seed read from env, never
+  committed). It verifies against the live
+  https://getagentid.dev/.well-known/jwks.json entry `agentid-2026-03`
+  (x=xdpmjfq2DX4d6yML7QjaSkYB2h9Dm3phwts5gkAPBp8), which is also
+  did:web:getagentid.dev#agentid-2026-03. The signed preimage is RFC 8785 JCS of
+  the *structural* AgentID slot (version "agentid-identity-v1-structural", nulls
+  kept — pure JCS, no legacy normaliser); the emitted slot relabels version to
+  "agentid-identity-v1-signed" and attaches the JWS + signer_key_id. As with the
+  AgentAvow slot, the JWS is embedded here as data (keyed by sha256 of the JCS
+  payload) and verified, not regenerated. The AgentID slot is shape-aligned per
+  issue #5 item (b): `did` -> `subject_did`, version -> structural label.
+
+APS slot (slots.aps):
+  Structural (unsigned) in v2 — no signature/signer_key_id. aeoess signs it in the
+  coordinated lockstep follow-up.
 """
 from __future__ import annotations
 
@@ -64,6 +76,22 @@ AGENTAVOW_SIGNER_KEY_ID = "did:web:agentgraph.co#agentgraph-security-v1"
 # https://agentgraph.co/.well-known/jwks.json .
 AGENTAVOW_PUBLIC_X = "JwovTLVbpgk85zlMNruTiLzp85dAucsZWngs8NisBFg"
 LIVE_JWKS_URL = "https://agentgraph.co/.well-known/jwks.json"
+
+# AgentID issuer identity. The public key is copied verbatim from the LIVE JWKS;
+# the same key is did:web:getagentid.dev#agentid-2026-03 (see /.well-known/did.json).
+AGENTID_KID = "agentid-2026-03"
+AGENTID_ISSUER_DID = "did:web:getagentid.dev"
+AGENTID_SIGNER_KEY_ID = AGENTID_ISSUER_DID + "#" + AGENTID_KID
+AGENTID_PUBLIC_X = "xdpmjfq2DX4d6yML7QjaSkYB2h9Dm3phwts5gkAPBp8"
+LIVE_AGENTID_JWKS_URL = "https://getagentid.dev/.well-known/jwks.json"
+
+# Production AgentID JWS strings, keyed by sha256(JCS(structural agentid slot)).
+# Produced by composed/v2/sign_agentid_slot.py with the production seed (env only).
+# All three fixtures carry the same structural AgentID slot, hence one entry.
+PROD_AGENTID_JWS = {
+    "67cb1049270cbe61bcb0b1fca2f502f1a587e6b86be30b30371ef9142dcb230e":
+        "eyJhbGciOiJFZERTQSIsImtpZCI6ImFnZW50aWQtMjAyNi0wMyJ9.eyJhY3RpdmUiOnRydWUsImFnZW50X2lkIjoiYWdlbnRfaW50ZXJvcF90ZXN0XzAwMSIsImJvdW5kX2FkZHJlc3NlcyI6WyI5djdSRHVIcmphbnNMdXJTRzhlTTJIUGF4YWZyak10eUdMNHVha3NDY0R1UiJdLCJjZXJ0aWZpY2F0ZV92YWxpZCI6dHJ1ZSwiY29tcHJvbWlzZWRfc2luY2UiOm51bGwsImVkMjU1MTlfYm91bmQiOnRydWUsImV4cGlyZXNfYXQiOiIyMDI3LTA0LTEwVDAwOjAwOjAwWiIsImlzc3VlZF9hdCI6IjIwMjYtMDQtMTBUMDA6MDA6MDBaIiwia2V5X3N0YXR1cyI6ImFjdGl2ZSIsInJldm9jYXRpb25fcmVhc29uIjpudWxsLCJyZXZva2VkX2F0IjpudWxsLCJzb2xhbmFfYWRkcmVzcyI6Ijl2N1JEdUhyamFuc0x1clNHOGVNMkhQYXhhZnJqTXR5R0w0dWFrc0NjRHVSIiwic3ViamVjdF9iaW5kaW5nIjoid2FsbGV0X2JvdW5kIiwic3ViamVjdF9kaWQiOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJ0cnVzdF9sZXZlbCI6MiwidHJ1c3RfbGV2ZWxfbGFiZWwiOiJMMiDigJQgVmVyaWZpZWQiLCJ2ZXJzaW9uIjoiYWdlbnRpZC1pZGVudGl0eS12MS1zdHJ1Y3R1cmFsIiwid2FsbGV0X2FkZHJlc3MiOm51bGwsIndhbGxldF9ib3VuZCI6ZmFsc2UsIndhbGxldF9jaGFpbiI6bnVsbH0.KIl3BdgBWwDTDOiO-mlTeq-yqEfPxRFcqFpB4E12F9Ml-SbRWENdTBGolJksQTUSV0VZfP1K4iVKXrV6iq83Dg",
+}
 
 # Production JWS strings, keyed by the AgentAvow slot's evidence_hash. Produced by
 # sign_slot_v2 with the PRODUCTION key in agentgraph-backend-1; verified below to
@@ -137,6 +165,34 @@ def sign_agentgraph_slot(structural_slot: dict) -> dict:
     return signed
 
 
+def _agentid_pubkey() -> Ed25519PublicKey:
+    return Ed25519PublicKey.from_public_bytes(_b64url_decode(AGENTID_PUBLIC_X))
+
+
+def sign_agentid_slot(structural_slot: dict) -> dict:
+    """Attach the production AgentID JWS to the structural slot and verify it."""
+    assert structural_slot["version"] == "agentid-identity-v1-structural"
+    payload = jcs.canonicalize(structural_slot)
+    key = hashlib.sha256(payload).hexdigest()
+    jws = PROD_AGENTID_JWS.get(key)
+    if jws is None:
+        raise SystemExit(f"FATAL: no production AgentID JWS on file for payload sha256 {key}")
+    h_b64, p_b64, s_b64 = jws.split(".")
+    if json.loads(_b64url_decode(h_b64)) != {"alg": "EdDSA", "kid": AGENTID_KID}:
+        raise SystemExit("FATAL: AgentID JWS header is not {alg:EdDSA, kid:agentid-2026-03}")
+    if _b64url_decode(p_b64) != payload:
+        raise SystemExit("FATAL: production AgentID JWS payload does not bind to reproduced slot")
+    try:
+        _agentid_pubkey().verify(_b64url_decode(s_b64), (h_b64 + "." + p_b64).encode())
+    except InvalidSignature:
+        raise SystemExit("FATAL: AgentID JWS does not verify under live agentid-2026-03 key")
+    signed = dict(structural_slot)
+    signed["version"] = "agentid-identity-v1-signed"
+    signed["signature"] = jws
+    signed["signer_key_id"] = AGENTID_SIGNER_KEY_ID
+    return signed
+
+
 def align_agentid_slot(v1_slot: dict) -> dict:
     """Shape-align per issue #5 (b): did -> subject_did, version -> structural. Unsigned."""
     aligned = dict(v1_slot)
@@ -167,7 +223,7 @@ def structural_aps_slot(v1_slot: dict) -> dict:
 def build_envelope(v1_env: dict) -> dict:
     slots = v1_env["slots"]
     out_slots = {
-        "agentid": align_agentid_slot(slots["agentid"]),
+        "agentid": sign_agentid_slot(align_agentid_slot(slots["agentid"])),
         "aps": structural_aps_slot(slots["aps"]),
         "agentgraph": sign_agentgraph_slot(slots["agentgraph"]),
     }
@@ -178,11 +234,11 @@ def build_envelope(v1_env: dict) -> dict:
         "slots": out_slots,
         "expected_composite": v1_env["expected_composite"],
         "metadata": {
-            "contributors": ["kenneives"],
+            "contributors": ["kenneives", "haroldmalikfrimpong-ops"],
             "fixture_form": "partially-signed",
             "derived_from": "composed/v1/agent_interop_test_001/" + v1_env["_src_name"],
-            "signed_slots": ["agentgraph"],
-            "structural_slots": ["agentid", "aps"],
+            "signed_slots": ["agentgraph", "agentid"],
+            "structural_slots": ["aps"],
             "signing": {
                 "agentgraph": {
                     "style": "compact-jws-rfc7515",
@@ -195,17 +251,20 @@ def build_envelope(v1_env: dict) -> dict:
                     "note": "aeoess signs the APS slot in the coordinated lockstep follow-up",
                 },
                 "agentid": {
-                    "status": "structural (unsigned) in v2",
+                    "style": "compact-jws-rfc7515",
+                    "signer_key_id": AGENTID_SIGNER_KEY_ID,
+                    "preimage": "JCS(RFC8785) of the structural slot (version agentid-identity-v1-structural), nulls kept",
+                    "key": "production (getagentid.dev, kid agentid-2026-03); verifies against " + LIVE_AGENTID_JWKS_URL,
                     "shape_alignment": "issue #5 (b): did->subject_did, version->agentid-identity-v1-structural",
-                    "note": "Harold signs the AgentID slot in the coordinated lockstep follow-up",
                 },
             },
             "lockstep_note": (
-                "Lockstep means each issuer signs its own slot. This PR lands the "
-                "AgentAvow slot signed; APS (aeoess) and AgentID (Harold) sign their "
-                "own slots in their follow-up PRs."
+                "Lockstep means each issuer signs its own slot. AgentAvow (#11) and "
+                "AgentID (interop-freeze-2026-10-06) slots are signed with their "
+                "production keys; APS (aeoess) signs its own slot in its follow-up."
             ),
-            "trust_anchor": "composed/v2/jwks.json (AgentAvow key, mirrors live " + LIVE_JWKS_URL + ")",
+            "trust_anchor": "composed/v2/jwks.json (AgentAvow + AgentID production keys, mirroring "
+                            + LIVE_JWKS_URL + " and " + LIVE_AGENTID_JWKS_URL + ")",
         },
     }
 
@@ -213,13 +272,13 @@ def build_envelope(v1_env: dict) -> dict:
 def build_jwks() -> dict:
     return {
         "_comment": (
-            "Offline trust anchor for composed/v2. Contains only the AgentAvow key: "
-            "agentgraph-security-v1 is the product's PRODUCTION public key, copied "
-            "verbatim from " + LIVE_JWKS_URL + ". The AgentAvow slot signature in this "
-            "batch verifies against it. APS and AgentID slots are structural (unsigned) "
-            "in v2; their keys join this JWKS when each co-issuer signs its own slot."
+            "Offline trust anchor for composed/v2. Two PRODUCTION public keys, each copied "
+            "verbatim from its issuer's live JWKS: agentgraph-security-v1 (AgentAvow, "
+            + LIVE_JWKS_URL + ") and agentid-2026-03 (AgentID, " + LIVE_AGENTID_JWKS_URL + "). "
+            "The APS slot is structural (unsigned) in v2; aeoess's key joins this JWKS when "
+            "the APS slot is signed."
         ),
-        "_source": LIVE_JWKS_URL,
+        "_source": [LIVE_JWKS_URL, LIVE_AGENTID_JWKS_URL],
         "keys": [
             {
                 "kty": "OKP",
@@ -230,7 +289,18 @@ def build_jwks() -> dict:
                 "x": AGENTAVOW_PUBLIC_X,
                 "_signer_key_id": AGENTAVOW_SIGNER_KEY_ID,
                 "_provenance": "production key, live at " + LIVE_JWKS_URL,
-            }
+            },
+            {
+                "kty": "OKP",
+                "crv": "Ed25519",
+                "alg": "EdDSA",
+                "use": "sig",
+                "kid": AGENTID_KID,
+                "x": AGENTID_PUBLIC_X,
+                "_signer_key_id": AGENTID_SIGNER_KEY_ID,
+                "_provenance": "production key, live at " + LIVE_AGENTID_JWKS_URL
+                               + " (also did:web:getagentid.dev#agentid-2026-03)",
+            },
         ],
     }
 
@@ -241,7 +311,7 @@ SOURCES = ("happy-path.json", "aps-revoked-delegation.json", "agentgraph-secret-
 def _render():
     outputs = {}
     for name in SOURCES:
-        v1_env = json.loads((V1_DIR / name).read_text())
+        v1_env = json.loads((V1_DIR / name).read_text(encoding="utf-8"))
         v1_env["_src_name"] = name
         outputs[name] = json.dumps(build_envelope(v1_env), indent=2, ensure_ascii=False) + "\n"
     outputs["jwks.json"] = json.dumps(build_jwks(), indent=2, ensure_ascii=False) + "\n"
@@ -257,18 +327,18 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.check:
-        drift = [n for n in SOURCES if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_text() != outputs[n]]
-        if not JWKS_PATH.exists() or JWKS_PATH.read_text() != outputs["jwks.json"]:
+        drift = [n for n in SOURCES if not (OUT_DIR / n).exists() or (OUT_DIR / n).read_text(encoding="utf-8") != outputs[n]]
+        if not JWKS_PATH.exists() or JWKS_PATH.read_text(encoding="utf-8") != outputs["jwks.json"]:
             drift.append("jwks.json")
         if drift:
             sys.stderr.write("DRIFT: " + ", ".join(drift) + "\n")
             return 1
-        print("reproducible: committed fixtures match generator output; AgentAvow JWS verifies under live key")
+        print("reproducible: committed fixtures match generator output; AgentAvow + AgentID JWS verify under live keys")
         return 0
 
     for name in SOURCES:
-        (OUT_DIR / name).write_text(outputs[name])
-    JWKS_PATH.write_text(outputs["jwks.json"])
+        (OUT_DIR / name).write_text(outputs[name], encoding="utf-8", newline="\n")
+    JWKS_PATH.write_text(outputs["jwks.json"], encoding="utf-8", newline="\n")
     print("wrote:", ", ".join(SOURCES), "and jwks.json")
     return 0
 

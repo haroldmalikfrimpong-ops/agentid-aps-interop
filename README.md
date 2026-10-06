@@ -41,8 +41,35 @@ fixtures/
     v1/
   cross-chain/
     identity-to-receipt.json        # Full chain test (pre-v1)
+  action-ref/
+    v2/                             # action_ref v1 (frozen, raw-concat, tuple-ambiguous) next to v2 (JCS-framed) — vectors + collision pairs
+composed/
+  v2/                               # three-signal envelopes; AgentAvow + AgentID slots production-signed, APS structural
+tools/
+  action_ref_v2.py                  # recompute + assert every action-ref vector
 crosswalk/
   agentid-to-aps.yaml               # Field-name mapping between vocabularies (v0.1)
+```
+
+### What's new — `interop-freeze-2026-10-06`
+
+- **AgentID slot signed in `composed/v2`** with the production key `agentid-2026-03`
+  (`did:web:getagentid.dev#agentid-2026-03`); `composed/v2/jwks.json` now carries the
+  AgentAvow and AgentID production public keys; `composed/v2/verify.py` → 84 checks incl.
+  AgentID tamper rejection. See [composed/v2/README.md](composed/v2/README.md).
+- **`fixtures/action-ref/v2`**: the raw-concat `action_ref` (v1, frozen as pinned in
+  `interop-freeze-2026-10-01` and preaction-governance-conformance#9) is tuple-ambiguous;
+  v2 = `sha256(JCS({agent_id, action_type, scope, timestamp_ms}))` is framed. Positive
+  (pinned PR #9 tuple), two collision pairs, one control. See
+  [fixtures/action-ref/v2/README.md](fixtures/action-ref/v2/README.md).
+
+Verify everything added in this freeze:
+
+```bash
+pip install jcs cryptography
+PYTHONUTF8=1 python3 composed/v2/verify.py            # 3 fixtures, 84/84
+PYTHONUTF8=1 python3 composed/v2/generate.py --check  # reproducible, both JWS verify
+python3 tools/action_ref_v2.py                        # 4 vectors, 30/30
 ```
 
 ### Schema validation

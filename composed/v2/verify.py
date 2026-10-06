@@ -2,22 +2,28 @@
 """
 composed/v2/verify.py — cross-issuer validator for the composed-v2 batch.
 
-composed-v2 lands the AgentAvow (formerly AgentGraph) static_analysis slot signed;
-the APS and AgentID slots ride structural (unsigned), pending each co-issuer's own
-lockstep follow-up ("lockstep" = each issuer signs its own slot). This validator:
+composed-v2 carries two production-signed slots — AgentAvow (formerly AgentGraph)
+static_analysis (#11) and AgentID identity (interop-freeze-2026-10-06) — while the
+APS slot rides structural (unsigned) pending aeoess's own lockstep follow-up
+("lockstep" = each issuer signs its own slot). This validator:
 
   * runs every structural check composed/v1 ran, for all three slots;
   * verifies the AgentAvow slot's real Ed25519/JWS signature against the AgentAvow
-    key in composed/v2/jwks.json (which is the PRODUCTION key, copied verbatim
-    from https://agentgraph.co/.well-known/jwks.json), and re-binds the JWS
-    payload to the slot content;
-  * runs a negative self-test: tampering the AgentAvow slot (content flip and
-    signature flip) MUST make signature verification fail.
+    key in composed/v2/jwks.json (PRODUCTION key, copied verbatim from
+    https://agentgraph.co/.well-known/jwks.json), and re-binds the JWS payload to
+    the slot content;
+  * verifies the AgentID slot's real Ed25519/JWS signature against the AgentID key
+    in composed/v2/jwks.json (PRODUCTION key `agentid-2026-03`, copied verbatim from
+    https://getagentid.dev/.well-known/jwks.json — the same key is
+    did:web:getagentid.dev#agentid-2026-03), re-binds the payload to RFC 8785 JCS
+    of the structural slot, and checks the signed subject_did matches the envelope;
+  * runs negative self-tests: tampering either signed slot (content flip and
+    signature flip) MUST make its signature verification fail.
 
 It is issuer-neutral and has no dependency on any issuer SDK.
 
 Dependencies:  pip install jcs cryptography
-Exit code:     0 all fixtures pass (incl. AgentAvow tamper rejection); 1 otherwise.
+Exit code:     0 all fixtures pass (incl. AgentAvow + AgentID tamper rejection); 1 otherwise.
 """
 from __future__ import annotations
 
@@ -45,12 +51,15 @@ HERE = Path(__file__).resolve().parent
 
 GATING_SLOTS = ("agentid", "aps", "agentgraph")
 
-# v2 slot versions: only AgentAvow is signed; APS + AgentID ride structural.
+# v2 slot versions: AgentAvow + AgentID are signed; APS rides structural.
 SLOT_EXPECTED_VERSIONS = {
     "agentgraph": {"agentgraph-scan-v1-signed"},
     "aps": {"aps-v2-structural"},
-    "agentid": {"agentid-identity-v1-structural"},
+    "agentid": {"agentid-identity-v1-signed"},
 }
+
+AGENTID_KID = "agentid-2026-03"
+AGENTID_SIGNER_KEY_ID = "did:web:getagentid.dev#agentid-2026-03"
 
 
 def _b64url_decode(s: str) -> bytes:
@@ -74,7 +83,7 @@ def _legacy_canonicalize(payload) -> bytes:
 
 
 def load_jwks() -> Dict[str, Ed25519PublicKey]:
-    data = json.loads((HERE / "jwks.json").read_text())
+    data = json.loads((HERE / "jwks.json").read_text(encoding="utf-8"))
     out: Dict[str, Ed25519PublicKey] = {}
     for jwk in data.get("keys", []):
         if jwk.get("kty") == "OKP" and jwk.get("crv") == "Ed25519":
@@ -105,6 +114,36 @@ def verify_agentgraph_sig(slot: Dict[str, Any], jwks: Dict[str, Ed25519PublicKey
             return False
         # 3. the jcs-rfc8785+sha256 label must hold for this content
         if expected != jcs.canonicalize(structural):
+            return False
+        return True
+    except (InvalidSignature, ValueError, KeyError):
+        return False
+
+
+def verify_agentid_sig(slot: Dict[str, Any], jwks: Dict[str, Ed25519PublicKey],
+                       envelope_subject: Optional[str] = None) -> bool:
+    """AgentID compact JWS: Ed25519 over header.payload; payload == JCS(structural slot)."""
+    try:
+        if slot.get("signer_key_id") != AGENTID_SIGNER_KEY_ID:
+            return False
+        pub = jwks.get(_kid_of(slot.get("signer_key_id")))
+        if pub is None:
+            return False
+        h_b64, p_b64, s_b64 = slot.get("signature", "").split(".")
+        header = json.loads(_b64url_decode(h_b64))
+        if header != {"alg": "EdDSA", "kid": AGENTID_KID}:
+            return False
+        # 1. cryptographic authenticity over the attached payload
+        pub.verify(_b64url_decode(s_b64), (h_b64 + "." + p_b64).encode())
+        # 2. bind: payload must equal RFC 8785 JCS of the structural slot
+        #    (signature fields removed, version reverted); nulls are kept — pure JCS.
+        structural = {k: v for k, v in slot.items() if k not in ("signature", "signer_key_id")}
+        structural["version"] = "agentid-identity-v1-structural"
+        if _b64url_decode(p_b64) != jcs.canonicalize(structural):
+            return False
+        # 3. the signed subject must be the envelope subject
+        signed = json.loads(_b64url_decode(p_b64))
+        if envelope_subject is not None and signed.get("subject_did") != envelope_subject:
             return False
         return True
     except (InvalidSignature, ValueError, KeyError):
@@ -156,7 +195,7 @@ def _flip_last_b64(sig: str) -> str:
 
 
 def _negative_rows(slots: Dict[str, Any], jwks: Dict[str, Ed25519PublicKey]) -> List[Tuple[str, bool]]:
-    """Tamper the ONLY signed slot (AgentAvow) and assert verification fails."""
+    """Tamper each signed slot (AgentAvow, AgentID) and assert verification fails."""
     import copy
     rows: List[Tuple[str, bool]] = []
     ag = copy.deepcopy(slots["agentgraph"])
@@ -165,12 +204,25 @@ def _negative_rows(slots: Dict[str, Any], jwks: Dict[str, Ed25519PublicKey]) -> 
     ag2 = copy.deepcopy(slots["agentgraph"])
     ag2["signature"] = _flip_last_b64(ag2["signature"])
     rows.append(("tamper rejected: agentgraph JWS signature flip", not verify_agentgraph_sig(ag2, jwks)))
+    if "agentid" in slots:
+        ai = copy.deepcopy(slots["agentid"])
+        ai["trust_level"] = 4
+        rows.append(("tamper rejected: agentid trust_level flip", not verify_agentid_sig(ai, jwks)))
+        ai2 = copy.deepcopy(slots["agentid"])
+        ai2["key_status"] = "revoked"
+        rows.append(("tamper rejected: agentid key_status flip", not verify_agentid_sig(ai2, jwks)))
+        ai3 = copy.deepcopy(slots["agentid"])
+        ai3["signature"] = _flip_last_b64(ai3["signature"])
+        rows.append(("tamper rejected: agentid JWS signature flip", not verify_agentid_sig(ai3, jwks)))
+        ai4 = copy.deepcopy(slots["agentid"])
+        ai4["signer_key_id"] = "did:web:agentgraph.co#agentgraph-security-v1"
+        rows.append(("tamper rejected: agentid signed under a foreign kid", not verify_agentid_sig(ai4, jwks)))
     return rows
 
 
 def verify_envelope(path: Path, jwks: Dict[str, Ed25519PublicKey]) -> Tuple[str, List[Tuple[str, bool]]]:
     rows: List[Tuple[str, bool]] = []
-    env = json.loads(path.read_text())
+    env = json.loads(path.read_text(encoding="utf-8"))
 
     rows.append(("composition_version=='composed-v2'", env.get("composition_version") == "composed-v2"))
     env_subject = env.get("subject_did")
@@ -197,8 +249,8 @@ def verify_envelope(path: Path, jwks: Dict[str, Ed25519PublicKey]) -> Tuple[str,
             rows.append((f"slots.{s}.version in {sorted(expected)}",
                          slots[s].get("version") in expected))
 
-    # only the AgentAvow slot is signed; APS + AgentID must be structural (no sig)
-    for s in ("aps", "agentid"):
+    # APS is the only structural slot left in v2 (no signature material)
+    for s in ("aps",):
         if s in slots:
             has_sig = "signature" in slots[s] or "signer_key_id" in slots[s] or any(
                 "signature" in h for h in slots[s].get("delegation_chain", [])
@@ -220,10 +272,16 @@ def verify_envelope(path: Path, jwks: Dict[str, Ed25519PublicKey]) -> Tuple[str,
             except Exception:
                 rows.append((f"slots.{s} JCS-canonicalizes", False))
 
-    # --- v2 signature verification (AgentAvow only) ---
+    # --- v2 signature verification (AgentAvow + AgentID) ---
     if "agentgraph" in slots:
         rows.append(("slots.agentgraph Ed25519/JWS signature verifies against live agentgraph.co key",
                      verify_agentgraph_sig(slots["agentgraph"], jwks)))
+    if "agentid" in slots:
+        rows.append(("slots.agentid Ed25519/JWS signature verifies against live getagentid.dev key "
+                     "(kid agentid-2026-03) and binds to JCS(structural slot) + envelope subject",
+                     verify_agentid_sig(slots["agentid"], jwks, env_subject)))
+        rows.append(("slots.agentid signer_key_id == did:web:getagentid.dev#agentid-2026-03",
+                     slots["agentid"].get("signer_key_id") == AGENTID_SIGNER_KEY_ID))
 
     # composite decision (unchanged rule from v1)
     passes = {s: _slot_passes(slots[s], s) for s in GATING_SLOTS if s in slots}
@@ -247,6 +305,9 @@ def main() -> int:
     jwks = load_jwks()
     if not jwks:
         sys.stderr.write("ERROR: no Ed25519 keys loaded from jwks.json\n")
+        return 2
+    if AGENTID_KID not in jwks:
+        sys.stderr.write("ERROR: jwks.json has no agentid-2026-03 key\n")
         return 2
 
     fixtures_dir = HERE / "agent_interop_test_001"

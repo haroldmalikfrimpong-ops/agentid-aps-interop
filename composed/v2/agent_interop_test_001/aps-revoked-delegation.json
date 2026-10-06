@@ -25,7 +25,9 @@
       "compromised_since": null,
       "revoked_at": null,
       "revocation_reason": null,
-      "version": "agentid-identity-v1-structural"
+      "version": "agentid-identity-v1-signed",
+      "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImFnZW50aWQtMjAyNi0wMyJ9.eyJhY3RpdmUiOnRydWUsImFnZW50X2lkIjoiYWdlbnRfaW50ZXJvcF90ZXN0XzAwMSIsImJvdW5kX2FkZHJlc3NlcyI6WyI5djdSRHVIcmphbnNMdXJTRzhlTTJIUGF4YWZyak10eUdMNHVha3NDY0R1UiJdLCJjZXJ0aWZpY2F0ZV92YWxpZCI6dHJ1ZSwiY29tcHJvbWlzZWRfc2luY2UiOm51bGwsImVkMjU1MTlfYm91bmQiOnRydWUsImV4cGlyZXNfYXQiOiIyMDI3LTA0LTEwVDAwOjAwOjAwWiIsImlzc3VlZF9hdCI6IjIwMjYtMDQtMTBUMDA6MDA6MDBaIiwia2V5X3N0YXR1cyI6ImFjdGl2ZSIsInJldm9jYXRpb25fcmVhc29uIjpudWxsLCJyZXZva2VkX2F0IjpudWxsLCJzb2xhbmFfYWRkcmVzcyI6Ijl2N1JEdUhyamFuc0x1clNHOGVNMkhQYXhhZnJqTXR5R0w0dWFrc0NjRHVSIiwic3ViamVjdF9iaW5kaW5nIjoid2FsbGV0X2JvdW5kIiwic3ViamVjdF9kaWQiOiJkaWQ6d2ViOmdldGFnZW50aWQuZGV2OmFnZW50OmFnZW50X2ludGVyb3BfdGVzdF8wMDEiLCJ0cnVzdF9sZXZlbCI6MiwidHJ1c3RfbGV2ZWxfbGFiZWwiOiJMMiDigJQgVmVyaWZpZWQiLCJ2ZXJzaW9uIjoiYWdlbnRpZC1pZGVudGl0eS12MS1zdHJ1Y3R1cmFsIiwid2FsbGV0X2FkZHJlc3MiOm51bGwsIndhbGxldF9ib3VuZCI6ZmFsc2UsIndhbGxldF9jaGFpbiI6bnVsbH0.KIl3BdgBWwDTDOiO-mlTeq-yqEfPxRFcqFpB4E12F9Ml-SbRWENdTBGolJksQTUSV0VZfP1K4iVKXrV6iq83Dg",
+      "signer_key_id": "did:web:getagentid.dev#agentid-2026-03"
     },
     "aps": {
       "version": "aps-v2-structural",
@@ -111,15 +113,16 @@
   },
   "metadata": {
     "contributors": [
-      "kenneives"
+      "kenneives",
+      "haroldmalikfrimpong-ops"
     ],
     "fixture_form": "partially-signed",
     "derived_from": "composed/v1/agent_interop_test_001/aps-revoked-delegation.json",
     "signed_slots": [
-      "agentgraph"
+      "agentgraph",
+      "agentid"
     ],
     "structural_slots": [
-      "agentid",
       "aps"
     ],
     "signing": {
@@ -134,12 +137,14 @@
         "note": "aeoess signs the APS slot in the coordinated lockstep follow-up"
       },
       "agentid": {
-        "status": "structural (unsigned) in v2",
-        "shape_alignment": "issue #5 (b): did->subject_did, version->agentid-identity-v1-structural",
-        "note": "Harold signs the AgentID slot in the coordinated lockstep follow-up"
+        "style": "compact-jws-rfc7515",
+        "signer_key_id": "did:web:getagentid.dev#agentid-2026-03",
+        "preimage": "JCS(RFC8785) of the structural slot (version agentid-identity-v1-structural), nulls kept",
+        "key": "production (getagentid.dev, kid agentid-2026-03); verifies against https://getagentid.dev/.well-known/jwks.json",
+        "shape_alignment": "issue #5 (b): did->subject_did, version->agentid-identity-v1-structural"
       }
     },
-    "lockstep_note": "Lockstep means each issuer signs its own slot. This PR lands the AgentAvow slot signed; APS (aeoess) and AgentID (Harold) sign their own slots in their follow-up PRs.",
-    "trust_anchor": "composed/v2/jwks.json (AgentAvow key, mirrors live https://agentgraph.co/.well-known/jwks.json)"
+    "lockstep_note": "Lockstep means each issuer signs its own slot. AgentAvow (#11) and AgentID (interop-freeze-2026-10-06) slots are signed with their production keys; APS (aeoess) signs its own slot in its follow-up.",
+    "trust_anchor": "composed/v2/jwks.json (AgentAvow + AgentID production keys, mirroring https://agentgraph.co/.well-known/jwks.json and https://getagentid.dev/.well-known/jwks.json)"
   }
 }
