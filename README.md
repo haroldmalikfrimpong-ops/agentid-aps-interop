@@ -72,6 +72,24 @@ PYTHONUTF8=1 python3 composed/v2/generate.py --check  # reproducible, both JWS v
 python3 tools/action_ref_v2.py                        # 4 vectors, 30/30
 ```
 
+### Optional receipt-graph policy fixtures
+
+[Issue #12](https://github.com/haroldmalikfrimpong-ops/agentid-aps-interop/issues/12)
+has five [adversarial vectors](fixtures/adversarial/v1/README.md) and an
+[offline four-signal composition](composed/adversarial/v1/README.md): closed ring,
+hub and spokes, replayed receipts, a ring with outside evidence, and a
+sponsor-backed passing control. The opt-in graph signal limits a consumer's
+synthetic exposure policy after the existing identity, authorization, and
+security gates. It does not add a provenance gate or change the frozen v1/v2
+profiles. Root independence, available budgets, and receipt truth are explicit
+fixture assumptions, not facts inferred from signatures.
+
+```bash
+pip install jcs jsonschema
+python3 composed/adversarial/v1/verify.py
+python3 -m unittest discover -s composed/adversarial/v1 -p 'test_*.py' -v
+```
+
 ### Schema validation
 
 All v1+ fixtures validate against `vector.schema.json` (Draft 2020-12). Quick check:

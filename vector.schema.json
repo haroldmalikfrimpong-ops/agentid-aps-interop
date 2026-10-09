@@ -45,6 +45,10 @@
       "type": "object",
       "description": "System-specific input envelopes. At least one of agentid_attestation or aps_delegation must be present.",
       "properties": {
+        "receipt_graph": {
+          "$ref": "#/$defs/receiptGraphInput",
+          "description": "Optional structural evidence for the consumer-selected composed receipt-graph policy. It is not an identity or authorization gate."
+        },
         "agentid_attestation": {
           "type": "object",
           "description": "AgentID attestation envelope (verify response, trust-header payload, or attestation envelope).",
@@ -427,6 +431,14 @@
       "description": "Expected gate states, failing gates, and composite decision a conformant verifier should produce. Five-gate model per the converged design (A2A #1672): per-gate failure reporting prevents collapse into a single confidence score, and failing_gates names exactly which gate(s) tipped the verdict.",
       "required": ["composite_decision", "reasoning", "failing_gates"],
       "properties": {
+        "receipt_graph": {
+          "$ref": "#/$defs/receiptGraphResult",
+          "description": "Expected fourth-signal result; independent of the native-gate composite_decision."
+        },
+        "consumer_decision": {
+          "$ref": "#/$defs/graphConsumerDecision",
+          "description": "Expected opt-in consumer decision after the native gates and receipt-graph cap are applied."
+        },
         "identity_gate": {
           "type": "string",
           "enum": ["passed", "failed", "stale", "not_applicable"],
@@ -518,6 +530,68 @@
           "items": { "type": "string" }
         }
       }
+    }
+  },
+  "$defs": {
+    "receiptGraphInput": {
+      "type": "object",
+      "required": ["version", "subject_did", "policy_id", "policy_hash", "requested_units", "receipts"],
+      "properties": {
+        "version": {"const": "receipt-graph-v1-structural"},
+        "subject_did": {"type": "string", "pattern": "^did:"},
+        "policy_id": {"const": "rooted-receipt-cap-v1"},
+        "policy_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "requested_units": {"type": "integer", "minimum": 1},
+        "receipts": {
+          "type": "array",
+          "description": "Structural completed interactions. Repeated wrappers are allowed as adversarial inputs and must not increase support. IDs are fixture claims, not proof of independent economic activity.",
+          "items": {
+            "type": "object",
+            "required": ["receipt_id", "interaction_id", "requester_did", "worker_did", "outcome", "completed_at", "fixture_form"],
+            "properties": {
+              "receipt_id": {"type": "string", "minLength": 1},
+              "interaction_id": {"type": "string", "minLength": 1},
+              "requester_did": {"type": "string", "pattern": "^did:"},
+              "worker_did": {"type": "string", "pattern": "^did:"},
+              "outcome": {"const": "completed"},
+              "completed_at": {"type": "string", "format": "date-time"},
+              "fixture_form": {"const": "structural"}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "receiptGraphResult": {
+      "type": "object",
+      "required": ["decision", "cap_units", "max_flow_units", "unique_interactions", "duplicate_interactions", "reason_codes"],
+      "properties": {
+        "decision": {"enum": ["deny", "cap", "permit"]},
+        "cap_units": {"type": "integer", "minimum": 0},
+        "max_flow_units": {"type": "integer", "minimum": 0},
+        "unique_interactions": {"type": "integer", "minimum": 0},
+        "duplicate_interactions": {"type": "integer", "minimum": 0},
+        "reason_codes": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["no_rooted_support", "request_exceeds_rooted_cap", "request_within_rooted_cap", "duplicate_interactions_ignored"]}
+        }
+      },
+      "additionalProperties": false
+    },
+    "graphConsumerDecision": {
+      "type": "object",
+      "required": ["decision", "cap_units", "failing_slots", "decisive_signal"],
+      "properties": {
+        "decision": {"enum": ["deny", "cap", "permit"]},
+        "cap_units": {"type": "integer", "minimum": 0},
+        "failing_slots": {
+          "type": "array", "uniqueItems": true,
+          "items": {"enum": ["agentid", "aps", "agentgraph"]}
+        },
+        "decisive_signal": {"enum": ["agentid", "aps", "agentgraph", "receipt_graph"]}
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
