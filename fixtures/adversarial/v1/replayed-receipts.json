@@ -1,0 +1,190 @@
+{
+  "scenario": "replayed-receipts",
+  "description": "Five copies or aliases of one rooted interaction must supply only one unit, not the requested five.",
+  "subject": {
+    "agent_id": "agent_interop_test_001",
+    "did": "did:web:getagentid.dev:agent:agent_interop_test_001"
+  },
+  "inputs": {
+    "agentid_attestation": {
+      "agent_id": "agent_interop_test_001",
+      "did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "trust_level": 2,
+      "trust_level_label": "L2 — Verified",
+      "certificate_valid": true,
+      "active": true,
+      "ed25519_bound": true,
+      "wallet_bound": false,
+      "solana_address": "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR",
+      "wallet_address": null,
+      "wallet_chain": null,
+      "bound_addresses": [
+        "9v7RDuHrjansLurSG8eM2HPaxafrjMtyGL4uaksCcDuR"
+      ],
+      "subject_binding": "wallet_bound",
+      "issued_at": "2026-04-10T00:00:00Z",
+      "expires_at": "2027-04-10T00:00:00Z",
+      "key_status": "active",
+      "compromised_since": null,
+      "revoked_at": null,
+      "revocation_reason": null,
+      "version": "1.1.0"
+    },
+    "aps_delegation": {
+      "version": "aps-v2-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:gateway.aeoess.com",
+      "delegation_chain": [
+        {
+          "hop": 0,
+          "delegator_did": "did:aps:z6MkHumanPrincipalInteropTest001",
+          "delegate_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "scope": [
+            "action:read",
+            "resource:documents"
+          ],
+          "not_before": "2026-04-21T00:00:00Z",
+          "not_after": "2026-07-21T00:00:00Z"
+        }
+      ],
+      "delegation_chain_root": "sha256:bca02d6c90a22d6beb1edc494358943ef70b42d75c2a94e0c4b76e77bcf8a846",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    },
+    "agentgraph_scan": {
+      "version": "agentgraph-scan-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "issuer_did": "did:web:agentgraph.co",
+      "scan_target": {
+        "url": "https://github.com/agentgraph-co/interop-test-agent",
+        "type": "repo",
+        "artifact_ref": "git:sha256:6c0f4fdeaa2f8b6ce0c3f0f5e8a4a9f1c7e6d5b8",
+        "fetched_at": "2026-04-15T12:00:00Z"
+      },
+      "scanner": {
+        "name": "agentgraph-trust-scanner",
+        "version": "2026.04.1"
+      },
+      "scanned_at": "2026-04-15T12:00:00Z",
+      "gates": {
+        "static_analysis": {
+          "grade": "A",
+          "score": 0.9,
+          "issue_count": 0
+        },
+        "secret_scan": {
+          "grade": "A+",
+          "score": 1.0,
+          "issue_count": 0
+        },
+        "dependency_audit": {
+          "grade": "A",
+          "score": 0.85,
+          "critical": 0,
+          "high": 0
+        }
+      },
+      "overall_grade": "A",
+      "evidence_url": "https://agentgraph.co/api/v1/entities/agent_interop_test_001/attestation/composed-slot",
+      "evidence_hash": "sha256:129c1949896a126ad612d82b8bc50777ce2a712690b3c36d4f50670c8092c8eb",
+      "canonicalization_spec": "jcs-rfc8785+sha256"
+    },
+    "receipt_graph": {
+      "version": "receipt-graph-v1-structural",
+      "subject_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+      "policy_id": "rooted-receipt-cap-v1",
+      "policy_hash": "sha256:50501c6b5445f26163d405f0fecc3edcd55773795e9cb11c727efded254c383e",
+      "requested_units": 5,
+      "receipts": [
+        {
+          "receipt_id": "receipt-001",
+          "interaction_id": "interaction-001",
+          "requester_did": "did:example:graph-sponsor",
+          "worker_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "outcome": "completed",
+          "completed_at": "2026-04-20T12:00:00Z",
+          "fixture_form": "structural"
+        },
+        {
+          "receipt_id": "receipt-001",
+          "interaction_id": "interaction-001",
+          "requester_did": "did:example:graph-sponsor",
+          "worker_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "outcome": "completed",
+          "completed_at": "2026-04-20T12:00:00Z",
+          "fixture_form": "structural"
+        },
+        {
+          "receipt_id": "receipt-001",
+          "interaction_id": "interaction-001",
+          "requester_did": "did:example:graph-sponsor",
+          "worker_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "outcome": "completed",
+          "completed_at": "2026-04-20T12:00:00Z",
+          "fixture_form": "structural"
+        },
+        {
+          "receipt_id": "receipt-alias-1",
+          "interaction_id": "interaction-001",
+          "requester_did": "did:example:graph-sponsor",
+          "worker_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "outcome": "completed",
+          "completed_at": "2026-04-20T12:00:00Z",
+          "fixture_form": "structural"
+        },
+        {
+          "receipt_id": "receipt-alias-2",
+          "interaction_id": "interaction-001",
+          "requester_did": "did:example:graph-sponsor",
+          "worker_did": "did:web:getagentid.dev:agent:agent_interop_test_001",
+          "outcome": "completed",
+          "completed_at": "2026-04-20T12:00:00Z",
+          "fixture_form": "structural"
+        }
+      ]
+    }
+  },
+  "expected_result": {
+    "identity_gate": "passed",
+    "delegation_gate": "passed",
+    "key_lifecycle_gate": "passed",
+    "security_gate": "passed",
+    "composite_decision": "permit",
+    "failing_gates": [],
+    "decisive_gate": "all_passed",
+    "reasoning": "The existing native gates pass. The separate consumer receipt-graph policy produces the bounded outcome below; it does not redefine identity or authorization.",
+    "receipt_graph": {
+      "decision": "cap",
+      "cap_units": 1,
+      "max_flow_units": 1,
+      "unique_interactions": 1,
+      "duplicate_interactions": 4,
+      "reason_codes": [
+        "request_exceeds_rooted_cap",
+        "duplicate_interactions_ignored"
+      ]
+    },
+    "consumer_decision": {
+      "decision": "cap",
+      "cap_units": 1,
+      "failing_slots": [],
+      "decisive_signal": "receipt_graph"
+    }
+  },
+  "metadata": {
+    "signature_alg": "Ed25519",
+    "canonicalization": "JCS (RFC 8785)",
+    "schema_version": "1.3.0",
+    "fixture_form": "structural",
+    "contributors": [
+      "scottonchain",
+      "hermes-agent-909",
+      "haroldmalikfrimpong-ops"
+    ],
+    "authorship": "Codex (AI), working with the scottonchain microcredit team; design follows Hermes's offer and the maintainer's issue #12 guidance.",
+    "signature_verification": "not performed; metadata names the native signature family, not a signed graph artifact",
+    "scope": "Synthetic consumer-policy counterexamples and control; no live-system finding or verified principal independence.",
+    "native_source": "composed/v1/agent_interop_test_001/happy-path.json",
+    "policy_source": "composed/adversarial/v1/policy.json",
+    "source_issue": "https://github.com/haroldmalikfrimpong-ops/agentid-aps-interop/issues/12"
+  }
+}

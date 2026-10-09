@@ -1,0 +1,11 @@
+{
+  "policy_id": "rooted-receipt-cap-v1",
+  "units": "synthetic_exposure_units",
+  "evaluation_time": "2026-04-21T21:00:00Z",
+  "unit_capacity_per_distinct_interaction": 1,
+  "roots": [
+    {"did": "did:example:graph-sponsor", "available_units": 5},
+    {"did": "did:example:outside-customer", "available_units": 1}
+  ],
+  "scope": "Consumer-selected structural fixture policy for one admission snapshot; not money, a calibrated credit score, or proof of principal independence."
+}
